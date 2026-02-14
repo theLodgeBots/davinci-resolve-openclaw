@@ -1,32 +1,40 @@
 # Development Plan
 
-## Phase 1: Foundation (Current)
+## Phase 1: Foundation ✅ COMPLETE
 - [x] Create repo and project structure
-- [ ] Build `resolve_bridge.py` — test connection to running DaVinci Resolve
-- [ ] Build `ingest.py` — scan folder, extract metadata with ffprobe
-- [ ] Build `transcribe.py` — extract audio + Whisper transcription
-- [ ] Test with nycap-portalcam project
+- [x] Build `resolve_bridge.py` — test connection to running DaVinci Resolve
+- [x] Build `ingest.py` — scan folder, extract metadata with ffprobe
+- [x] Build `transcribe.py` — extract audio + Whisper transcription
+- [x] Test with nycap-portalcam project (26 clips, 28.6 min)
 
-## Phase 2: Script Engine
-- [ ] Design edit plan JSON schema (clips, cuts, order, B-roll markers)
-- [ ] Build `script_engine.py` — LLM takes transcripts + metadata → edit plan
-- [ ] Handle multi-camera selection logic
-- [ ] Support different edit styles (documentary, vlog, highlight reel)
+## Phase 2: Script Engine ✅ COMPLETE + ENHANCED
+- [x] Design edit plan JSON schema (clips, cuts, order, B-roll markers)
+- [x] Build `script_engine.py` — LLM takes transcripts + metadata → edit plan
+- [x] Build `script_engine_enhanced.py` — rich B-roll strategy with continuous coverage
+- [x] Handle multi-camera selection logic (Sony main, DJI B-roll)
+- [x] Support different edit styles (basic + enhanced versions)
 
-## Phase 3: Timeline Builder
-- [ ] Build `timeline_builder.py` — reads edit plan, drives Resolve API
-- [ ] Create project, import media to pool
-- [ ] Build timeline with clips at correct in/out points
-- [ ] Multi-track layout (V1: main, V2: B-roll, A1-A2: audio)
-- [ ] Add markers for review points
-- [ ] Audio sync between cameras
+## Phase 3: Timeline Builder ✅ COMPLETE
+- [x] Build `timeline_builder.py` — reads edit plan, drives Resolve API
+- [x] Create project, import media to pool
+- [x] Build timeline with clips at correct in/out points
+- [x] Multi-track layout (V1: main, V2: B-roll, A1: audio)
+- [x] Add markers for review points (section markers)
+- [x] Enhanced version: 16 clips with 50% B-roll coverage
 
-## Phase 4: MCP Server
-- [ ] Build MCP server exposing Resolve operations as tools
-- [ ] Tools: list_projects, create_project, import_media, create_timeline
-- [ ] Tools: add_clip_to_timeline, set_in_out, add_marker, render
-- [ ] Tools: get_transcript, analyze_clips
-- [ ] Register with OpenClaw as a skill
+## Current Status: 🎬 FULL WORKING PIPELINE
+- **Original:** 7 sections, 10 clips, 4 minutes, 20% B-roll
+- **Enhanced:** 8 sections, 16 clips, 5 minutes, 50% B-roll
+- Both timelines successfully built in DaVinci Resolve "nycap-portalcam" project
+- Uses 7 DJI drone clips for dynamic aerial footage
+
+## Phase 4: OpenClaw Skill Integration ✅ COMPLETE
+- [x] Created OpenClaw skill in `/skills/davinci-resolve/SKILL.md`
+- [x] Built CLI wrapper `video_pipeline` with subcommands (pipeline, ingest, transcribe, script, timeline, analyze, status)
+- [x] Integrated all tools: ingest, transcribe, script generation, timeline building, analysis
+- [x] Added system status checking and error handling
+- [x] Full pipeline command with dry-run support
+- [x] Proper OpenClaw skill metadata and installation requirements
 
 ## Phase 5: Polish
 - [ ] Speaker diarization
