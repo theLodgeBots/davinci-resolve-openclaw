@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+_audio/
+_transcripts/
+manifest.json
+.DS_Store
