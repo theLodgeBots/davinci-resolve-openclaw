@@ -1,0 +1,117 @@
+{
+  "generated": "2026-02-15T00:31:40.876015",
+  "description": "Social media render presets for DaVinci Resolve OpenClaw",
+  "version": "1.0",
+  "presets": {
+    "tiktok_vertical": {
+      "name": "TikTok Vertical 9:16",
+      "format": "mp4",
+      "codec": "h264_aac",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "framerate": 30,
+      "bitrate_video": 8000,
+      "bitrate_audio": 128,
+      "quality": "high",
+      "platforms": [
+        "TikTok",
+        "Instagram Stories",
+        "YouTube Shorts"
+      ],
+      "description": "Vertical 9:16 format optimized for mobile social platforms"
+    },
+    "instagram_square": {
+      "name": "Instagram Square 1:1",
+      "format": "mp4",
+      "codec": "h264_aac",
+      "resolution": {
+        "width": 1080,
+        "height": 1080
+      },
+      "framerate": 30,
+      "bitrate_video": 6000,
+      "bitrate_audio": 128,
+      "quality": "high",
+      "platforms": [
+        "Instagram Post",
+        "Facebook",
+        "Twitter"
+      ],
+      "description": "Square 1:1 format for Instagram posts and social feeds"
+    },
+    "linkedin_horizontal": {
+      "name": "LinkedIn Horizontal 16:9",
+      "format": "mp4",
+      "codec": "h264_aac",
+      "resolution": {
+        "width": 1920,
+        "height": 1080
+      },
+      "framerate": 30,
+      "bitrate_video": 10000,
+      "bitrate_audio": 128,
+      "quality": "high",
+      "platforms": [
+        "LinkedIn",
+        "Twitter",
+        "Facebook"
+      ],
+      "description": "Professional horizontal format for business platforms"
+    },
+    "instagram_reels": {
+      "name": "Instagram Reels 9:16",
+      "format": "mp4",
+      "codec": "h264_aac",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "framerate": 30,
+      "bitrate_video": 9000,
+      "bitrate_audio": 128,
+      "quality": "high",
+      "platforms": [
+        "Instagram Reels",
+        "Facebook Reels"
+      ],
+      "description": "Vertical 9:16 optimized for Instagram Reels algorithm"
+    },
+    "youtube_shorts": {
+      "name": "YouTube Shorts 9:16",
+      "format": "mp4",
+      "codec": "h264_aac",
+      "resolution": {
+        "width": 1080,
+        "height": 1920
+      },
+      "framerate": 30,
+      "bitrate_video": 12000,
+      "bitrate_audio": 192,
+      "quality": "high",
+      "platforms": [
+        "YouTube Shorts"
+      ],
+      "description": "High-quality vertical format for YouTube Shorts"
+    },
+    "twitter_optimized": {
+      "name": "Twitter Optimized 16:9",
+      "format": "mp4",
+      "codec": "h264_aac",
+      "resolution": {
+        "width": 1280,
+        "height": 720
+      },
+      "framerate": 30,
+      "bitrate_video": 5000,
+      "bitrate_audio": 128,
+      "quality": "medium",
+      "platforms": [
+        "Twitter",
+        "X"
+      ],
+      "description": "Compressed horizontal format for Twitter's file size limits"
+    }
+  }
+}
