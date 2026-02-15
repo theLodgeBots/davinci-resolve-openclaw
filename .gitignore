@@ -5,3 +5,5 @@ _audio/
 _transcripts/
 manifest.json
 .DS_Store
+portalcam-5min-interview.mp4
+renders/*.mp4
