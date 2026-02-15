@@ -182,11 +182,13 @@ body { font-family: -apple-system, system-ui, sans-serif; background: #0d1117; c
 .btn:hover { background: #30363d; }
 .btn.primary { background: #238636; border-color: #2ea043; color: #fff; }
 .btn.primary:hover { background: #2ea043; }
+.btn.secondary { background: #d29922; border-color: #d29922; color: #fff; }
+.btn.secondary:hover { background: #b8860b; }
 
 /* Layout */
 .layout { display: flex; height: calc(100vh - 52px); }
 
-/* Sidebar: Source Clips */
+/* Sidebar: Source Clips or Hooks */
 .sidebar { width: 340px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; flex-shrink: 0; }
 .sidebar-header { padding: 12px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 8px; }
 .sidebar-header h2 { font-size: 14px; color: #f0f6fc; }
@@ -196,14 +198,19 @@ body { font-family: -apple-system, system-ui, sans-serif; background: #0d1117; c
 .filter-btn.active { background: #1f6feb; border-color: #1f6feb; color: #fff; }
 .clip-list { flex: 1; overflow-y: auto; padding: 8px; }
 
-.clip-card { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 6px; cursor: grab; transition: all 0.15s; border-left: 3px solid #30363d; }
-.clip-card:hover { border-color: #58a6ff; }
-.clip-card.dragging { opacity: 0.5; }
-.clip-card .clip-name { font-size: 13px; font-weight: 600; color: #f0f6fc; margin-bottom: 4px; }
-.clip-card .clip-meta { font-size: 11px; color: #8b949e; display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
-.clip-card .clip-summary { font-size: 12px; color: #b1bac4; line-height: 1.4; }
+.clip-card, .hook-card { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 10px; margin-bottom: 6px; cursor: grab; transition: all 0.15s; border-left: 3px solid #30363d; }
+.clip-card:hover, .hook-card:hover { border-color: #58a6ff; }
+.clip-card.dragging, .hook-card.dragging { opacity: 0.5; }
+.clip-card .clip-name, .hook-card .hook-quote { font-size: 13px; font-weight: 600; color: #f0f6fc; margin-bottom: 4px; }
+.clip-card .clip-meta, .hook-card .hook-meta { font-size: 11px; color: #8b949e; display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.clip-card .clip-summary, .hook-card .hook-reason { font-size: 12px; color: #b1bac4; line-height: 1.4; }
 .clip-card .clip-transcript { font-size: 11px; color: #8b949e; max-height: 0; overflow: hidden; transition: max-height 0.2s; line-height: 1.4; margin-top: 4px; }
 .clip-card .clip-transcript.open { max-height: 200px; overflow-y: auto; }
+
+/* Hook card specific */
+.hook-card { border-left-color: #f778ba; }
+.hook-card .hook-quote { font-style: italic; }
+.hook-card .hook-reason { font-size: 11px; color: #8b949e; margin-top: 4px; }
 
 /* Scene type colors */
 .clip-card[data-type="intro"] { border-left-color: #58a6ff; }
@@ -230,7 +237,39 @@ body { font-family: -apple-system, system-ui, sans-serif; background: #0d1117; c
 .main-header { padding: 12px 16px; border-bottom: 1px solid #30363d; display: flex; align-items: center; gap: 12px; }
 .main-header input { background: #0d1117; border: 1px solid #30363d; color: #f0f6fc; padding: 6px 10px; border-radius: 4px; font-size: 16px; font-weight: 600; flex: 1; }
 
-.storyboard { flex: 1; overflow-y: auto; padding: 16px; }
+/* Project Settings Panel */
+.project-settings { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 16px; }
+.project-settings.collapsed { padding-bottom: 0; }
+.settings-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer; color: #f0f6fc; font-size: 14px; font-weight: 600; }
+.settings-header:hover { color: #58a6ff; }
+.settings-content { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.project-settings.collapsed .settings-content { display: none; }
+.setting-group { display: flex; flex-direction: column; gap: 4px; }
+.setting-group label { font-size: 12px; color: #8b949e; font-weight: 600; }
+.setting-group select, .setting-group textarea { background: #0d1117; border: 1px solid #30363d; color: #f0f6fc; padding: 6px 8px; border-radius: 4px; font-size: 13px; font-family: inherit; }
+.setting-group textarea { resize: vertical; min-height: 50px; }
+.setting-group.full-width { grid-column: 1 / -1; }
+.toggle-group { display: flex; gap: 16px; align-items: center; }
+.toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; }
+.toggle input[type="checkbox"] { width: 16px; height: 16px; accent-color: #238636; }
+
+/* Storyboard and Transcript tabs */
+.content-tabs { display: flex; border-bottom: 1px solid #30363d; background: #161b22; }
+.tab-btn { background: transparent; border: none; color: #8b949e; padding: 8px 16px; cursor: pointer; font-size: 13px; border-bottom: 2px solid transparent; }
+.tab-btn.active { color: #f0f6fc; border-bottom-color: #58a6ff; }
+.tab-btn:hover { color: #f0f6fc; }
+
+.storyboard, .transcript-preview { flex: 1; overflow-y: auto; padding: 16px; display: none; }
+.storyboard.active, .transcript-preview.active { display: block; }
+
+/* Transcript Preview */
+.transcript-preview { background: #0d1117; }
+.transcript-section { margin-bottom: 16px; padding: 12px; background: #161b22; border: 1px solid #30363d; border-radius: 6px; }
+.transcript-section h4 { color: #f0f6fc; font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.transcript-section .transcript-text { color: #c9d1d9; line-height: 1.5; font-size: 14px; }
+.transcript-section .clip-info { font-size: 11px; color: #8b949e; }
+.transcript-section.title-card { border-left: 3px solid #d29922; }
+.transcript-section.clip { border-left: 3px solid #58a6ff; }
 
 /* Arrangement cards */
 .arrange-item { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 12px; margin-bottom: 8px; position: relative; display: flex; gap: 12px; align-items: flex-start; }
@@ -269,19 +308,21 @@ body { font-family: -apple-system, system-ui, sans-serif; background: #0d1117; c
   <span class="info" id="resolveInfo"></span>
   <button class="btn" onclick="loadData()">⟳ Refresh</button>
   <button class="btn" onclick="addTitleCard()">+ Title Card</button>
+  <button class="btn secondary" onclick="findHooks()" id="hookBtn" style="display:none">🎣 Find Hooks</button>
   <button class="btn" onclick="aiSuggest()">🤖 AI Arrange</button>
   <button class="btn primary" onclick="buildTimeline()">▶ Build in Resolve</button>
 </div>
 
 <div class="layout">
-  <!-- Sidebar: Source Clips -->
+  <!-- Sidebar: Source Clips or Hooks -->
   <div class="sidebar">
     <div class="sidebar-header">
-      <h2>Source Clips</h2>
-      <span class="count" id="clipCount">0</span>
+      <h2 id="sidebarTitle">Source Clips</h2>
+      <span class="count" id="sidebarCount">0</span>
     </div>
     <div class="filter-bar" id="filterBar"></div>
     <div class="clip-list" id="clipList"></div>
+    <div class="clip-list" id="hooksList" style="display:none;"></div>
   </div>
 
   <!-- Main: Storyboard Arrangement -->
@@ -290,12 +331,62 @@ body { font-family: -apple-system, system-ui, sans-serif; background: #0d1117; c
       <input type="text" id="editTitle" value="Untitled Edit" placeholder="Edit title..." oninput="saveState()">
     </div>
 
-    <div class="storyboard" id="storyboard">
+    <!-- Project Settings Panel -->
+    <div class="project-settings" id="projectSettings">
+      <div class="settings-header" onclick="toggleProjectSettings()">
+        <span>⚙️ Project Settings</span>
+        <span id="settingsToggle">▼</span>
+      </div>
+      <div class="settings-content">
+        <div class="setting-group">
+          <label>Target Length</label>
+          <select id="targetLength" onchange="saveState()">
+            <option value="30">30 seconds</option>
+            <option value="60">1 minute</option>
+            <option value="120">2 minutes</option>
+            <option value="180">3 minutes</option>
+            <option value="300" selected>5 minutes</option>
+            <option value="600">10 minutes</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="toggle-group">
+          <label class="toggle">
+            <input type="checkbox" id="removePauses" onchange="saveState()">
+            Remove All Pauses
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="findHooksToggle" onchange="toggleHooksPanel()">
+            Find Hooks
+          </label>
+        </div>
+        <div class="setting-group full-width">
+          <label>Video Prompt</label>
+          <textarea id="videoPrompt" placeholder="Describe what the video should convey, its tone, purpose..." oninput="saveState()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Tabs -->
+    <div class="content-tabs">
+      <button class="tab-btn active" onclick="switchTab('storyboard')">📝 Storyboard</button>
+      <button class="tab-btn" onclick="switchTab('transcript')">📄 Transcript Preview</button>
+    </div>
+
+    <div class="storyboard active" id="storyboard">
       <div class="drop-zone" id="dropZone"
            ondragover="handleDragOver(event)"
            ondragleave="handleDragLeave(event)"
            ondrop="handleDrop(event)">
         Drag clips here to build your rough cut
+      </div>
+    </div>
+
+    <div class="transcript-preview" id="transcriptPreview">
+      <div id="transcriptContent">
+        <p style="color: #8b949e; text-align: center; padding: 40px;">
+          Add clips to your arrangement to see the full transcript preview here.
+        </p>
       </div>
     </div>
 
@@ -315,10 +406,19 @@ body { font-family: -apple-system, system-ui, sans-serif; background: #0d1117; c
 
 <script>
 let allClips = [];
+let hooks = [];
 let arrangement = [];
 let activeFilter = 'all';
 let draggedClipId = null;
+let draggedHookId = null;
 let draggedArrangeIdx = null;
+let showingHooks = false;
+let projectSettings = {
+  targetLength: 300,
+  videoPrompt: '',
+  removePauses: false,
+  findHooksEnabled: false
+};
 
 async function loadData() {
   try {
@@ -336,12 +436,24 @@ async function loadData() {
     const stateRes = await fetch('/api/state');
     const state = await stateRes.json();
     arrangement = state.arrangement || [];
+    projectSettings = state.projectSettings || projectSettings;
     document.getElementById('editTitle').value = state.title || 'Untitled Edit';
     document.getElementById('editNotes').value = state.notes || '';
+    
+    // Load project settings into UI
+    document.getElementById('targetLength').value = projectSettings.targetLength;
+    document.getElementById('videoPrompt').value = projectSettings.videoPrompt;
+    document.getElementById('removePauses').checked = projectSettings.removePauses;
+    document.getElementById('findHooksToggle').checked = projectSettings.findHooksEnabled;
     
     buildFilters();
     renderClips();
     renderArrangement();
+    updateTranscriptPreview();
+    
+    if (projectSettings.findHooksEnabled) {
+      toggleHooksPanel();
+    }
   } catch(e) {
     console.error(e);
   }
@@ -565,16 +677,28 @@ function removeItem(idx) {
 }
 
 async function saveState() {
+  // Update project settings from UI
+  projectSettings = {
+    targetLength: parseInt(document.getElementById('targetLength').value),
+    videoPrompt: document.getElementById('videoPrompt').value,
+    removePauses: document.getElementById('removePauses').checked,
+    findHooksEnabled: document.getElementById('findHooksToggle').checked
+  };
+  
   const state = {
     arrangement,
     title: document.getElementById('editTitle').value,
     notes: document.getElementById('editNotes').value,
+    projectSettings: projectSettings
   };
   await fetch('/api/state', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(state),
   });
+  
+  // Update transcript preview when arrangement changes
+  updateTranscriptPreview();
 }
 
 async function aiSuggest() {
@@ -617,6 +741,241 @@ function el(tag, attrs, text) {
   }
   if (text) e.textContent = text;
   return e;
+}
+
+// Project Settings Functions
+function toggleProjectSettings() {
+  const settings = document.getElementById('projectSettings');
+  const toggle = document.getElementById('settingsToggle');
+  settings.classList.toggle('collapsed');
+  toggle.textContent = settings.classList.contains('collapsed') ? '▶' : '▼';
+}
+
+function toggleHooksPanel() {
+  const enabled = document.getElementById('findHooksToggle').checked;
+  const hookBtn = document.getElementById('hookBtn');
+  
+  if (enabled) {
+    hookBtn.style.display = 'inline-block';
+    showHooksInSidebar();
+  } else {
+    hookBtn.style.display = 'none';
+    showClipsInSidebar();
+  }
+  saveState();
+}
+
+function showClipsInSidebar() {
+  showingHooks = false;
+  document.getElementById('sidebarTitle').textContent = 'Source Clips';
+  document.getElementById('sidebarCount').textContent = allClips.length;
+  document.getElementById('clipList').style.display = 'block';
+  document.getElementById('hooksList').style.display = 'none';
+  document.getElementById('filterBar').style.display = 'flex';
+}
+
+function showHooksInSidebar() {
+  showingHooks = true;
+  document.getElementById('sidebarTitle').textContent = 'Hooks';
+  document.getElementById('sidebarCount').textContent = hooks.length;
+  document.getElementById('clipList').style.display = 'none';
+  document.getElementById('hooksList').style.display = 'block';
+  document.getElementById('filterBar').style.display = 'none';
+}
+
+// Hooks Functions
+async function findHooks() {
+  if (allClips.length === 0) return alert('Load clips first!');
+  
+  try {
+    const res = await fetch('/api/find-hooks', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({clips: allClips})
+    });
+    const data = await res.json();
+    hooks = data.hooks || [];
+    renderHooks();
+    document.getElementById('sidebarCount').textContent = hooks.length;
+  } catch(e) {
+    console.error('Error finding hooks:', e);
+    alert('Error finding hooks. Check console.');
+  }
+}
+
+function renderHooks() {
+  const list = document.getElementById('hooksList');
+  list.innerHTML = '';
+  
+  if (hooks.length === 0) {
+    list.innerHTML = '<p style="padding:16px;color:#8b949e;text-align:center;">No hooks found. Click "Find Hooks" to analyze transcripts.</p>';
+    return;
+  }
+  
+  for (const hook of hooks) {
+    const card = document.createElement('div');
+    card.className = 'hook-card';
+    card.draggable = true;
+    card.ondragstart = (e) => { 
+      draggedHookId = hook.id; 
+      draggedClipId = null;
+      e.dataTransfer.effectAllowed = 'copy'; 
+      card.classList.add('dragging'); 
+    };
+    card.ondragend = () => { card.classList.remove('dragging'); };
+    
+    card.innerHTML = `
+      <div class="hook-quote">"${hook.quote}"</div>
+      <div class="hook-meta">
+        <span class="tag">Hook</span>
+        <span>${hook.duration}s</span>
+        <span>${hook.source}</span>
+        <span>${hook.timestamp}</span>
+      </div>
+      <div class="hook-reason">${hook.reason}</div>
+    `;
+    
+    // Double click to add to arrangement
+    card.ondblclick = () => addHookToArrangement(hook.id);
+    
+    list.appendChild(card);
+  }
+}
+
+function addHookToArrangement(hookId) {
+  const hook = hooks.find(h => h.id === hookId);
+  if (!hook) return;
+  
+  arrangement.push({
+    type: 'clip',
+    clipId: hook.clipId,
+    filename: hook.filename,
+    duration: hook.duration,
+    summary: `Hook: "${hook.quote}"`,
+    scene_type: 'hook',
+    startTime: hook.startTime,
+    endTime: hook.endTime,
+    note: hook.reason,
+  });
+  renderArrangement();
+  saveState();
+}
+
+// Tab Functions
+function switchTab(tab) {
+  // Update tab buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Show/hide content
+  document.getElementById('storyboard').classList.remove('active');
+  document.getElementById('transcriptPreview').classList.remove('active');
+  
+  if (tab === 'storyboard') {
+    document.getElementById('storyboard').classList.add('active');
+  } else if (tab === 'transcript') {
+    document.getElementById('transcriptPreview').classList.add('active');
+    updateTranscriptPreview();
+  }
+}
+
+// Transcript Preview Functions
+async function updateTranscriptPreview() {
+  if (arrangement.length === 0) {
+    document.getElementById('transcriptContent').innerHTML = 
+      '<p style="color: #8b949e; text-align: center; padding: 40px;">Add clips to your arrangement to see the full transcript preview here.</p>';
+    return;
+  }
+  
+  try {
+    const res = await fetch('/api/transcript-preview', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({arrangement: arrangement})
+    });
+    const data = await res.json();
+    renderTranscriptPreview(data.sections || []);
+  } catch(e) {
+    console.error('Error loading transcript preview:', e);
+  }
+}
+
+function renderTranscriptPreview(sections) {
+  const content = document.getElementById('transcriptContent');
+  content.innerHTML = '';
+  
+  for (let i = 0; i < sections.length; i++) {
+    const section = sections[i];
+    const div = document.createElement('div');
+    div.className = `transcript-section ${section.type}`;
+    
+    if (section.type === 'title') {
+      div.innerHTML = `
+        <h4>📝 Title Card ${i + 1}</h4>
+        <div class="transcript-text">
+          <strong>${section.text}</strong>
+          ${section.subtitle ? `<br><em>${section.subtitle}</em>` : ''}
+        </div>
+        <div class="clip-info">Duration: ${section.duration}s</div>
+      `;
+    } else {
+      div.innerHTML = `
+        <h4>🎬 Clip ${i + 1} <span class="clip-info">(${section.filename})</span></h4>
+        <div class="transcript-text">${section.transcript}</div>
+        <div class="clip-info">
+          Duration: ${formatDuration(section.duration)} • 
+          Type: ${section.scene_type} • 
+          ${section.summary ? `Summary: ${section.summary}` : ''}
+        </div>
+      `;
+    }
+    
+    content.appendChild(div);
+  }
+}
+
+// Update drag handling for hooks
+function handleDropAt(index) {
+  if (draggedArrangeIdx !== null) {
+    // Reorder within arrangement
+    const item = arrangement.splice(draggedArrangeIdx, 1)[0];
+    if (draggedArrangeIdx < index) index--;
+    arrangement.splice(index, 0, item);
+    draggedArrangeIdx = null;
+  } else if (draggedClipId) {
+    // Add clip from sidebar
+    const clip = allClips.find(c => c.id === draggedClipId);
+    if (clip) {
+      arrangement.splice(index, 0, {
+        type: 'clip',
+        clipId: clip.id,
+        filename: clip.filename,
+        duration: clip.duration,
+        summary: clip.summary || clip.transcript?.substring(0, 100) || '',
+        scene_type: clip.scene_type,
+      });
+    }
+    draggedClipId = null;
+  } else if (draggedHookId) {
+    // Add hook from sidebar
+    const hook = hooks.find(h => h.id === draggedHookId);
+    if (hook) {
+      arrangement.splice(index, 0, {
+        type: 'clip',
+        clipId: hook.clipId,
+        filename: hook.filename,
+        duration: hook.duration,
+        summary: `Hook: "${hook.quote}"`,
+        scene_type: 'hook',
+        startTime: hook.startTime,
+        endTime: hook.endTime,
+        note: hook.reason,
+      });
+    }
+    draggedHookId = null;
+  }
+  renderArrangement();
+  saveState();
 }
 
 loadData();
@@ -668,6 +1027,16 @@ class StoryboardHandler(BaseHTTPRequestHandler):
         elif parsed.path == "/api/build-timeline":
             result = build_resolve_timeline(body)
             self._json(result)
+
+        elif parsed.path == "/api/find-hooks":
+            clips = body.get("clips", [])
+            hooks = find_hooks_ai(clips)
+            self._json({"hooks": hooks})
+
+        elif parsed.path == "/api/transcript-preview":
+            arrangement = body.get("arrangement", [])
+            sections = generate_transcript_preview(arrangement)
+            self._json({"sections": sections})
 
         else:
             self.send_response(404)
@@ -746,6 +1115,141 @@ Skip outtakes. Include 5-6 title cards between sections. Use only clips from the
     except Exception as e:
         print(f"AI arrange error: {e}")
         return []
+
+
+def find_hooks_ai(clips):
+    """Use AI to find interesting hooks in transcripts."""
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        return []
+
+    speech_clips = [c for c in clips if c.get("has_speech") and c.get("transcript")]
+    if not speech_clips:
+        return []
+
+    # Prepare clips data for AI analysis
+    clips_data = []
+    for c in speech_clips:
+        clips_data.append({
+            "id": c["id"],
+            "filename": c["filename"], 
+            "duration": c["duration"],
+            "transcript": c["transcript"],
+            "scene_type": c.get("scene_type", "unknown")
+        })
+
+    prompt = f"""Analyze these video transcripts and identify the most interesting, engaging, or compelling 5-15 second segments that would work as "hooks" to grab viewers' attention.
+
+For each hook, provide:
+- A compelling quote (5-15 seconds of speech)
+- Why it's interesting/engaging  
+- Estimated start/end timestamps
+
+Return as JSON array with this format:
+[
+  {{
+    "id": "hook_1",
+    "clipId": "original_clip_id",
+    "filename": "file.MP4",
+    "quote": "the actual spoken text",
+    "reason": "why this is compelling",
+    "startTime": 45.2,
+    "endTime": 52.8,
+    "duration": 7.6,
+    "timestamp": "0:45"
+  }}
+]
+
+Clips to analyze:
+{json.dumps(clips_data, indent=2)}
+
+Focus on:
+- Surprising revelations or results
+- Strong emotional reactions  
+- Compelling demonstrations or reveals
+- Interesting pricing or value statements
+- Memorable quotes or one-liners
+- Moments that create curiosity or intrigue
+
+Identify 5-8 hooks maximum. Only include genuinely compelling moments."""
+
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {"role": "system", "content": "Output only valid JSON array."},
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.3,
+                "max_tokens": 3000,
+            },
+            timeout=60,
+        )
+        
+        if response.status_code == 200:
+            content = response.json()["choices"][0]["message"]["content"]
+            if content.startswith("```"):
+                content = content.split("\n", 1)[1].rsplit("```", 1)[0]
+            hooks = json.loads(content)
+            
+            # Add source info to each hook
+            for hook in hooks:
+                source_clip = next((c for c in clips if c["id"] == hook["clipId"]), None)
+                if source_clip:
+                    hook["source"] = source_clip.get("source", "")
+            
+            return hooks
+    except Exception as e:
+        print(f"Find hooks error: {e}")
+        return []
+
+
+def generate_transcript_preview(arrangement):
+    """Generate a full transcript preview from the arrangement."""
+    sections = []
+    
+    # Load all clips data
+    clips_lookup = {}
+    clips = load_clips_with_transcripts()
+    for clip in clips:
+        clips_lookup[clip["id"]] = clip
+    
+    for i, item in enumerate(arrangement):
+        if item["type"] == "title":
+            sections.append({
+                "type": "title",
+                "text": item.get("text", ""),
+                "subtitle": item.get("subtitle", ""),
+                "duration": item.get("duration", 3),
+                "index": i
+            })
+        elif item["type"] == "clip":
+            clip_id = item.get("clipId")
+            clip_data = clips_lookup.get(clip_id)
+            
+            if clip_data:
+                # Check if this is a hook (has specific timing)
+                transcript = clip_data.get("transcript", "")
+                if item.get("startTime") and item.get("endTime"):
+                    # This is a hook - we'd need more sophisticated text timing to extract the exact portion
+                    # For now, show the hook quote if available
+                    if "Hook:" in item.get("summary", ""):
+                        transcript = item.get("summary", "").replace("Hook: ", "")
+                
+                sections.append({
+                    "type": "clip",
+                    "filename": item.get("filename", ""),
+                    "transcript": transcript,
+                    "duration": item.get("duration", 0),
+                    "scene_type": item.get("scene_type", "unknown"),
+                    "summary": item.get("summary", ""),
+                    "index": i
+                })
+    
+    return sections
 
 
 def build_resolve_timeline(data):
