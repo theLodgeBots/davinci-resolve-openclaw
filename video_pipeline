@@ -18,6 +18,9 @@ from script_engine_enhanced import generate_enhanced_edit_plan
 from timeline_builder import build_timeline_from_plan
 from analyze_usage import analyze_clip_usage
 from resolve_bridge import get_resolve
+from scene_detection import analyze_project_scenes, save_scene_analysis
+from auto_export import render_timeline, render_project_timelines, RENDER_PRESETS
+from script_engine_ai import generate_ai_enhanced_edit_plan
 
 def main():
     parser = argparse.ArgumentParser(description="AI Video Editing Pipeline")
@@ -26,8 +29,8 @@ def main():
     # Full pipeline command
     pipeline = subparsers.add_parser('pipeline', help='Run complete editing pipeline')
     pipeline.add_argument('folder', help='Path to folder containing video files')
-    pipeline.add_argument('--style', choices=['basic', 'enhanced'], default='enhanced', 
-                         help='Edit style (default: enhanced)')
+    pipeline.add_argument('--style', choices=['basic', 'enhanced', 'ai'], default='enhanced', 
+                         help='Edit style: basic, enhanced, or ai (with scene analysis)')
     pipeline.add_argument('--project-name', help='Custom DaVinci Resolve project name')
     pipeline.add_argument('--dry-run', action='store_true', help='Skip timeline building')
     
@@ -41,7 +44,7 @@ def main():
     script = subparsers.add_parser('script', help='Generate edit plan')
     script.add_argument('manifest', help='Path to manifest.json file')
     script.add_argument('transcripts', help='Path to transcripts directory')
-    script.add_argument('--style', choices=['basic', 'enhanced'], default='enhanced')
+    script.add_argument('--style', choices=['basic', 'enhanced', 'ai'], default='enhanced')
     script.add_argument('--output', help='Custom output path for edit plan')
     
     timeline = subparsers.add_parser('timeline', help='Build DaVinci Resolve timeline')
@@ -54,6 +57,18 @@ def main():
     analyze.add_argument('edit_plan', help='Path to edit_plan.json file')
     
     status = subparsers.add_parser('status', help='Check system status')
+    
+    # Phase 5 enhancements
+    scenes = subparsers.add_parser('scenes', help='Analyze shot types and scene classification')
+    scenes.add_argument('manifest', help='Path to manifest.json file')
+    
+    export = subparsers.add_parser('export', help='Auto-render and export timeline')
+    export.add_argument('project', help='DaVinci Resolve project name')
+    export.add_argument('timeline', help='Timeline name (or --all for all timelines)')
+    export.add_argument('--preset', choices=list(RENDER_PRESETS.keys()), default='youtube_1080p',
+                       help='Render preset (default: youtube_1080p)')
+    export.add_argument('--output', help='Custom output directory')
+    export.add_argument('--no-wait', action='store_true', help='Start render without waiting for completion')
     
     args = parser.parse_args()
     
@@ -76,6 +91,10 @@ def main():
             return cmd_analyze(args.manifest, args.edit_plan)
         elif args.command == 'pipeline':
             return cmd_pipeline(args.folder, args.style, args.project_name, args.dry_run)
+        elif args.command == 'scenes':
+            return cmd_scenes(args.manifest)
+        elif args.command == 'export':
+            return cmd_export(args.project, args.timeline, args.preset, args.output, not args.no_wait)
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)
         return 1
@@ -151,7 +170,9 @@ def cmd_script(manifest_path, transcripts_dir, style, output_path):
     
     print(f"🤖 Generating {style} edit script...")
     
-    if style == 'enhanced':
+    if style == 'ai':
+        edit_plan = generate_ai_enhanced_edit_plan(manifest_path, transcripts_dir, output_path)
+    elif style == 'enhanced':
         edit_plan = generate_enhanced_edit_plan(manifest_path, transcripts_dir, output_path)
     else:
         edit_plan = generate_edit_plan(manifest_path, transcripts_dir, output_path)
@@ -257,19 +278,31 @@ def cmd_pipeline(folder_path, style, project_name, dry_run):
     else:
         print(f"   Using existing transcripts: {transcripts_dir}")
     
+    # Step 2.5: Scene analysis (if using AI style)
+    if style == 'ai':
+        scene_analysis_path = os.path.join(folder_path, "scene_analysis.json")
+        if not os.path.exists(scene_analysis_path):
+            print(f"\nStep 2.5/5: Analyzing scenes for AI enhancement...")
+            cmd_scenes(manifest_path)
+        else:
+            print(f"\nStep 2.5/5: Using existing scene analysis: {scene_analysis_path}")
+    
     # Step 3: Generate script
-    print(f"\nStep 3/4: Generating {style} edit script...")
-    edit_plan_path = os.path.join(folder_path, f"edit_plan{'_enhanced' if style=='enhanced' else ''}.json")
+    step_num = "3/5" if style == 'ai' else "3/4"
+    print(f"\nStep {step_num}: Generating {style} edit script...")
+    suffix = '_ai_enhanced' if style == 'ai' else ('_enhanced' if style == 'enhanced' else '')
+    edit_plan_path = os.path.join(folder_path, f"edit_plan{suffix}.json")
     if not os.path.exists(edit_plan_path):
         cmd_script(manifest_path, transcripts_dir, style, edit_plan_path)
     else:
         print(f"   Using existing edit plan: {edit_plan_path}")
     
     # Step 4: Build timeline
+    step_num = "4/5" if style == 'ai' else "4/4"
     if dry_run:
-        print("\nStep 4/4: Skipping timeline creation (dry run)")
+        print(f"\nStep {step_num}: Skipping timeline creation (dry run)")
     else:
-        print("\nStep 4/4: Building DaVinci Resolve timeline...")
+        print(f"\nStep {step_num}: Building DaVinci Resolve timeline...")
         cmd_timeline(edit_plan_path, manifest_path, project_name)
     
     # Summary
@@ -280,6 +313,89 @@ def cmd_pipeline(folder_path, style, project_name, dry_run):
     print(f"   📁 Processed {manifest['total_clips']} clips ({manifest['total_duration_minutes']:.1f} min)")
     print(f"   🎬 Timeline ready in DaVinci Resolve")
     print(f"   📋 Next: Review, adjust, and export your video!")
+    
+    return 0
+
+def cmd_scenes(manifest_path):
+    """Analyze scenes and shot types."""
+    if not os.path.exists(manifest_path):
+        raise FileNotFoundError(f"Manifest not found: {manifest_path}")
+    
+    print(f"🎯 Analyzing scenes from: {manifest_path}")
+    
+    # Check OpenAI API key
+    api_key = os.getenv('OPENAI_API_KEY')
+    if not api_key:
+        raise Exception("OpenAI API key not found (set OPENAI_API_KEY)")
+    
+    analysis = analyze_project_scenes(manifest_path)
+    
+    if "error" in analysis:
+        raise Exception(f"Scene analysis failed: {analysis['error']}")
+    
+    # Save results
+    output_path = os.path.join(os.path.dirname(manifest_path), "scene_analysis.json")
+    save_scene_analysis(analysis, output_path)
+    
+    # Print summary
+    summary = analysis.get("scene_summary", {})
+    print(f"✅ Analyzed {analysis['analyzed_clips']}/{analysis['total_clips']} clips")
+    print(f"   Shot scales: {summary.get('shot_scale_distribution', {})}")
+    print(f"   Movements: {summary.get('movement_distribution', {})}")
+    print(f"   Subjects: {summary.get('subject_distribution', {})}")
+    
+    if analysis["failed_clips"] > 0:
+        print(f"⚠️  {analysis['failed_clips']} clips failed analysis")
+    
+    print(f"   Results saved: {output_path}")
+    return 0
+
+def cmd_export(project_name, timeline_name, preset, output_dir, wait):
+    """Export timeline(s) from DaVinci Resolve."""
+    # Check Resolve connection
+    resolve = get_resolve()
+    if not resolve:
+        raise Exception("Cannot connect to DaVinci Resolve. Is it running?")
+    
+    print(f"🎬 Exporting from project: {project_name}")
+    print(f"   Timeline: {timeline_name}")
+    print(f"   Preset: {RENDER_PRESETS[preset]['description']}")
+    if output_dir:
+        print(f"   Output: {output_dir}")
+    
+    try:
+        if timeline_name == "--all":
+            # Render all timelines
+            result = render_project_timelines(project_name, preset, output_dir)
+            
+            if result.get("error"):
+                raise Exception(result["error"])
+            
+            print(f"\n📊 Export Summary:")
+            print(f"   Success: {result['rendered_timelines']}/{result['total_timelines']}")
+            
+            if result['failed_timelines'] > 0:
+                print(f"   Failed: {result['failed_timelines']}")
+                return 1
+        else:
+            # Render single timeline
+            result = render_timeline(project_name, timeline_name, preset, output_dir, wait)
+            
+            if result.get("error"):
+                raise Exception(result["error"])
+            
+            if result.get("status") == "complete":
+                print(f"✅ Export complete!")
+                if result.get("filename"):
+                    print(f"   File: {result['filename']}")
+            elif result.get("status") == "started":
+                print(f"✅ Render started (job ID: {result.get('job_id')})")
+                print(f"💡 Use DaVinci Resolve's render queue to monitor progress")
+            else:
+                print(f"⚠️  Render status: {result.get('status', 'unknown')}")
+    
+    except Exception as e:
+        raise Exception(f"Export failed: {e}")
     
     return 0
 

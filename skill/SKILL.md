@@ -81,7 +81,74 @@ python3 timeline_builder.py /path/to/edit_plan.json /path/to/manifest.json [proj
 Run the complete pipeline in one command.
 
 ```bash
-python3 pipeline.py /path/to/footage/folder [--enhanced] [--project-name "Custom Name"]
+# Basic pipeline
+python3 pipeline.py /path/to/footage/folder
+
+# Enhanced pipeline with Phase 5 features
+python3 pipeline_enhanced.py /path/to/footage/folder [options]
+```
+
+## Phase 5: Advanced Features
+
+### Speaker Diarization
+Identify different speakers in multi-person footage using OpenAI Whisper.
+
+```bash
+# Single video
+python3 speaker_diarization.py /path/to/video.mp4
+
+# Entire project
+python3 speaker_diarization.py /path/to/manifest.json
+```
+
+### Scene Detection & Shot Classification
+AI-powered visual analysis to classify shots (wide, close-up, B-roll, interview).
+
+```bash
+# Analyze project scenes
+python3 scene_detection.py /path/to/manifest.json
+
+# Single video analysis
+python3 scene_detection.py /path/to/video.mp4
+```
+
+### Color Grading Presets
+Apply camera-specific color grading presets automatically.
+
+```bash
+# List available presets
+python3 color_grading.py list
+
+# Analyze project camera types
+python3 color_grading.py analyze /path/to/manifest.json
+
+# Apply automatic color grading
+python3 color_grading.py apply /path/to/manifest.json [project_name] [preset]
+```
+
+### Auto-Render & Export
+Automatically render timelines with optimized presets.
+
+```bash
+python3 auto_export.py <project_name> <timeline_name> <preset> <output_path>
+
+# Example
+python3 auto_export.py "MyProject" "Main Timeline" youtube_1080p /path/to/renders/
+```
+
+### Enhanced Pipeline
+Complete workflow with all Phase 5 features integrated.
+
+```bash
+# Full enhanced pipeline
+python3 pipeline_enhanced.py /path/to/footage/
+
+# With options
+python3 pipeline_enhanced.py /path/to/footage/ \
+    --project-name "Product Review" \
+    --color-preset sony \
+    --auto-render \
+    --render-preset youtube_4k
 ```
 
 ## Analysis Tools

@@ -36,9 +36,10 @@
 - [x] Full pipeline command with dry-run support
 - [x] Proper OpenClaw skill metadata and installation requirements
 
-## Phase 5: Polish
-- [ ] Speaker diarization
-- [ ] Scene detection / shot classification (wide, close-up, etc.)
-- [ ] Color grading presets per camera type
-- [ ] Auto-render and export
-- [ ] Web UI for review (optional)
+## Phase 5: Polish ✅ MOSTLY COMPLETE
+- [x] **Speaker diarization** — Multi-person footage analysis with OpenAI Whisper
+- [x] **Scene detection** — AI-powered shot classification (wide, close-up, B-roll)
+- [x] **Color grading presets** — Camera-specific looks (Sony, DJI, Canon, iPhone, GoPro, Mixed)
+- [x] **Auto-render and export** — Multiple render presets (4K, 1080p, social media, proxy)
+- [x] **Enhanced pipeline** — Unified command with all Phase 5 features integrated
+- [ ] Web UI for review (optional — low priority)
