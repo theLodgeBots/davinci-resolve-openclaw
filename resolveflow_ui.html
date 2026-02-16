@@ -182,39 +182,49 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 <!-- Scripts Tab -->
 <div class="tab-content" id="tab-scripts">
   <div class="scripts-container">
-    <div class="script-selector">
-      <select id="scriptSelect"><option value="">Select a script...</option></select>
-      <button class="btn btn-accent btn-small" id="newScriptBtn">+ New Script</button>
-      <button class="btn btn-danger btn-small" id="deleteScriptBtn" style="display:none">Delete</button>
-      <div class="script-meta" id="scriptMeta"></div>
-    </div>
-    <div class="scripts-main">
-      <!-- Left: Transcript -->
-      <div class="transcript-panel">
-        <div class="panel-header">
-          <div class="panel-title">Full Transcript</div>
-          <input type="text" class="transcript-search" id="transcriptSearch" placeholder="Search...">
-          <button class="btn btn-secondary btn-small" id="addAllBtn">Add All</button>
-          <button class="btn btn-accent btn-small" id="aiGenerateBtn">AI Generate</button>
-        </div>
-        <div class="panel-body" id="transcriptBody">
-          <div class="empty-state">Transcripts will appear here after transcription.</div>
-        </div>
+
+    <!-- Section 1: Clip Selector -->
+    <div style="border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;flex-wrap:wrap">
+        <span style="font-weight:600;font-size:14px">Select Clips</span>
+        <button class="btn btn-secondary btn-small" id="selectAllClipsBtn">Select All</button>
+        <button class="btn btn-secondary btn-small" id="deselectAllClipsBtn">Deselect All</button>
+        <span id="clipSelectionSummary" style="margin-left:auto;font-size:13px;color:var(--text2)">0 clips selected</span>
       </div>
-      <!-- Right: Script Editor -->
-      <div class="script-panel">
-        <div class="panel-header">
-          <div class="panel-title">Script Editor</div>
-        </div>
-        <div class="panel-body" id="scriptBody">
-          <div class="empty-state" id="scriptEmpty">Select or create a script to begin editing.</div>
-          <ul class="script-segments" id="scriptSegments"></ul>
-        </div>
-        <div class="script-footer">
-          <div class="script-duration" id="scriptDuration">0:00</div>
-          <button class="btn btn-secondary" id="exportEdlBtn">Export EDL</button>
-          <button class="btn btn-green" id="sendResolveBtn" style="padding:12px 24px;font-size:15px">Send to Resolve</button>
-        </div>
+      <div id="clipSelectorGrid" style="display:flex;gap:8px;padding:0 20px 12px;overflow-x:auto;flex-wrap:nowrap"></div>
+    </div>
+
+    <!-- Section 2: Transcript Preview (collapsible) -->
+    <div style="border-bottom:1px solid var(--border);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;cursor:pointer" onclick="toggleTranscriptPreview()">
+        <span id="transcriptToggleIcon" style="font-size:12px">▶</span>
+        <span style="font-weight:600;font-size:14px">Transcript Preview</span>
+        <input type="text" id="transcriptSearch" placeholder="Search transcripts..." style="margin-left:auto;padding:6px 10px;font-size:12px;width:200px" onclick="event.stopPropagation()">
+      </div>
+      <div id="transcriptPreviewBody" style="display:none;max-height:300px;overflow-y:auto;padding:0 20px 12px">
+        <div class="empty-state">Select clips above to preview transcripts.</div>
+      </div>
+    </div>
+
+    <!-- Section 3: Script Workspace -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <!-- Script header bar -->
+      <div class="script-selector">
+        <select id="scriptSelect"><option value="">Select a script...</option></select>
+        <button class="btn btn-accent btn-small" id="newScriptBtn">+ New Script</button>
+        <button class="btn btn-danger btn-small" id="deleteScriptBtn" style="display:none">Delete</button>
+        <div class="script-meta" id="scriptMeta"></div>
+        <button class="btn btn-accent" id="aiGenerateBtn" style="margin-left:auto;padding:10px 20px;font-size:14px">✨ AI Generate</button>
+      </div>
+      <!-- Script segments -->
+      <div class="panel-body" id="scriptBody" style="flex:1;overflow-y:auto;padding:12px 20px">
+        <div class="empty-state" id="scriptEmpty">Select or create a script, then use AI Generate to build your edit.</div>
+        <ul class="script-segments" id="scriptSegments"></ul>
+      </div>
+      <div class="script-footer">
+        <div class="script-duration" id="scriptDuration">0:00</div>
+        <button class="btn btn-secondary" id="exportEdlBtn">Export EDL</button>
+        <button class="btn btn-green" id="sendResolveBtn" style="padding:12px 24px;font-size:15px">🎬 Send to Resolve</button>
       </div>
     </div>
   </div>
@@ -223,28 +233,30 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 <!-- AI Modal -->
 <div class="modal-overlay" id="aiModal">
   <div class="modal">
-    <h3>AI Generate Script</h3>
+    <h3>✨ AI Generate Script</h3>
     <label>Target Duration</label>
-    <select id="aiDuration">
-      <option value="30">30 seconds</option>
-      <option value="60" selected>1 minute</option>
-      <option value="120">2 minutes</option>
-      <option value="300">5 minutes</option>
-      <option value="custom">Custom...</option>
-    </select>
-    <input type="number" id="aiCustomDuration" placeholder="Seconds" style="display:none;margin-top:8px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="durationPresets">
+      <button class="btn btn-secondary btn-small dur-preset" data-dur="30">30s</button>
+      <button class="btn btn-secondary btn-small dur-preset" data-dur="60">1 min</button>
+      <button class="btn btn-accent btn-small dur-preset active" data-dur="120">2 min</button>
+      <button class="btn btn-secondary btn-small dur-preset" data-dur="300">5 min</button>
+      <button class="btn btn-secondary btn-small dur-preset" data-dur="600">10 min</button>
+      <input type="number" id="aiCustomDuration" placeholder="Custom (sec)" style="width:110px;padding:6px 8px;font-size:12px">
+    </div>
     <label>Style</label>
     <select id="aiStyle">
-      <option value="highlight">Highlight Reel</option>
+      <option value="highlight reel">Highlight Reel</option>
       <option value="documentary">Documentary</option>
-      <option value="interview">Interview</option>
-      <option value="social">Social Media</option>
+      <option value="interview edit">Interview Edit</option>
+      <option value="social media">Social Media</option>
+      <option value="tutorial">Tutorial</option>
     </select>
-    <label>Custom Prompt (optional)</label>
+    <label>Custom Instructions (optional)</label>
     <textarea id="aiPrompt" placeholder="e.g. Focus on the outdoor shots, upbeat energy..."></textarea>
+    <p id="aiClipNote" style="font-size:12px;color:var(--text2);margin-top:8px"></p>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-accent" id="aiSubmitBtn">Generate</button>
+      <button class="btn btn-accent" id="aiSubmitBtn" style="padding:10px 24px">🚀 Generate</button>
     </div>
   </div>
 </div>
@@ -305,7 +317,7 @@ $$('.tab').forEach(tab => {
     $$('.tab-content').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     $(`#tab-${tab.dataset.tab}`).classList.add('active');
-    if (tab.dataset.tab === 'scripts') loadFullTranscript();
+    if (tab.dataset.tab === 'scripts') { renderClipSelector(); loadScripts(); }
   });
 });
 
@@ -460,13 +472,123 @@ $('#transcribeAllBtn').addEventListener('click', async () => {
   } catch { toast('Transcription failed', 'error'); }
 });
 
-// Scripts
+// ===== SCRIPTS TAB =====
+
+// Selected clip IDs for script generation
+let selectedClipIds = new Set();
+let clipTranscriptCache = {}; // clip_id -> {segments, full_text}
+
+// Clip Selector
+function renderClipSelector() {
+  const grid = $('#clipSelectorGrid');
+  const transcribedClips = clips.filter(c => c.has_transcript);
+  if (!transcribedClips.length) {
+    grid.innerHTML = '<div class="empty-state" style="padding:20px;width:100%">No transcribed clips. Go to Clips tab and transcribe first.</div>';
+    updateClipSelectionSummary();
+    return;
+  }
+  grid.innerHTML = transcribedClips.map(c => {
+    const sel = selectedClipIds.has(c.id);
+    const dur = formatTime(c.duration_seconds);
+    const cam = c.camera || '?';
+    const camColor = cam === 'Sony' ? '#3b82f6' : cam === 'DJI' ? '#22c55e' : '#6b7280';
+    return `<div onclick="toggleClipSelection(${c.id})" style="flex-shrink:0;width:160px;background:var(--surface);border:2px solid ${sel?'var(--accent)':'var(--border)'};border-radius:var(--radius);cursor:pointer;overflow:hidden;transition:all 0.2s">
+      <div style="position:relative;height:80px;background:var(--surface2);overflow:hidden">
+        <img src="/api/thumbnails/${c.id}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">
+        <div style="position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:4px;border:2px solid ${sel?'var(--accent)':'var(--text2)'};background:${sel?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff">${sel?'✓':''}</div>
+        <span style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.7);color:#fff;font-size:10px;padding:1px 5px;border-radius:3px">${dur}</span>
+      </div>
+      <div style="padding:6px 8px">
+        <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escHtml(c.filename)}">${escHtml(c.filename)}</div>
+        <span style="font-size:10px;padding:1px 4px;border-radius:3px;background:${camColor};color:#fff">${cam}</span>
+      </div>
+    </div>`;
+  }).join('');
+  updateClipSelectionSummary();
+}
+
+function toggleClipSelection(id) {
+  if (selectedClipIds.has(id)) selectedClipIds.delete(id);
+  else selectedClipIds.add(id);
+  renderClipSelector();
+  renderTranscriptPreview();
+}
+
+$('#selectAllClipsBtn').addEventListener('click', () => {
+  clips.filter(c => c.has_transcript).forEach(c => selectedClipIds.add(c.id));
+  renderClipSelector();
+  renderTranscriptPreview();
+});
+
+$('#deselectAllClipsBtn').addEventListener('click', () => {
+  selectedClipIds.clear();
+  renderClipSelector();
+  renderTranscriptPreview();
+});
+
+function updateClipSelectionSummary() {
+  const count = selectedClipIds.size;
+  const totalSec = clips.filter(c => selectedClipIds.has(c.id)).reduce((a,c) => a + (c.duration_seconds||0), 0);
+  $('#clipSelectionSummary').textContent = `${count} clip${count!==1?'s':''} selected (${formatTime(totalSec)} total)`;
+}
+
+// Transcript Preview
+let transcriptPreviewOpen = false;
+function toggleTranscriptPreview() {
+  transcriptPreviewOpen = !transcriptPreviewOpen;
+  $('#transcriptPreviewBody').style.display = transcriptPreviewOpen ? 'block' : 'none';
+  $('#transcriptToggleIcon').textContent = transcriptPreviewOpen ? '▼' : '▶';
+  if (transcriptPreviewOpen) renderTranscriptPreview();
+}
+
+async function renderTranscriptPreview() {
+  const body = $('#transcriptPreviewBody');
+  if (!transcriptPreviewOpen) return;
+  if (!selectedClipIds.size) {
+    body.innerHTML = '<div class="empty-state">Select clips above to preview transcripts.</div>';
+    return;
+  }
+  const filter = ($('#transcriptSearch').value || '').toLowerCase();
+  // Load transcripts for selected clips
+  let html = '';
+  for (const cid of selectedClipIds) {
+    if (!clipTranscriptCache[cid]) {
+      try {
+        const d = await api(`/api/transcript/${cid}`);
+        clipTranscriptCache[cid] = d;
+      } catch { continue; }
+    }
+    const data = clipTranscriptCache[cid];
+    const segments = data.segments || [];
+    const clip = clips.find(c => c.id === cid);
+    const fname = clip ? clip.filename : `Clip ${cid}`;
+    const filteredSegs = filter ? segments.filter(s => (s.text||'').toLowerCase().includes(filter)) : segments;
+    if (filter && !filteredSegs.length) continue;
+    html += `<div class="transcript-clip-section"><div class="transcript-clip-header">${escHtml(fname)}</div>`;
+    filteredSegs.forEach(s => {
+      const mm = Math.floor((s.start_time||0)/60);
+      const ss = Math.floor((s.start_time||0)%60);
+      const tc = `${mm.toString().padStart(2,'0')}:${ss.toString().padStart(2,'0')}`;
+      const text = s.text || '';
+      const displayed = filter ? text.replace(new RegExp(`(${filter.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark style="background:var(--accent);color:#fff;border-radius:2px;padding:0 2px">$1</mark>') : escHtml(text);
+      html += `<div class="transcript-segment"><span class="tc">[${tc}]</span> ${displayed}</div>`;
+    });
+    html += '</div>';
+  }
+  body.innerHTML = html || '<div class="empty-state">No matching transcript text.</div>';
+}
+
+$('#transcriptSearch').addEventListener('input', () => renderTranscriptPreview());
+
+// Scripts CRUD
 async function loadScripts() {
   try {
     const d = await api('/api/scripts');
     scripts = d.scripts || d || [];
     const sel = $('#scriptSelect');
+    const curVal = sel.value;
     sel.innerHTML = '<option value="">Select a script...</option>' + scripts.map(s => `<option value="${s.id}">${escHtml(s.name||'Untitled')}</option>`).join('');
+    if (curVal) sel.value = curVal;
   } catch {}
 }
 
@@ -482,19 +604,24 @@ $('#scriptSelect').addEventListener('change', async e => {
 $('#newScriptBtn').addEventListener('click', async () => {
   const name = prompt('Script name:');
   if (!name) return;
-  const dur = prompt('Target duration (seconds):', '120');
   try {
-    const s = await api('/api/scripts', {method:'POST', body: JSON.stringify({name, target_duration: parseInt(dur)||120})});
+    const s = await api('/api/scripts', {method:'POST', body: JSON.stringify({name, target_duration: 120})});
     toast('Script created!', 'success');
     await loadScripts();
-    if (s.id) { $('#scriptSelect').value = s.id; currentScript = s; renderScript(); }
+    if (s.id) {
+      $('#scriptSelect').value = s.id;
+      currentScript = await api(`/api/script/${s.id}`);
+      renderScript();
+    }
   } catch { toast('Failed to create script', 'error'); }
 });
 
 $('#deleteScriptBtn').addEventListener('click', async () => {
-  if (!currentScript || !confirm('Delete this script?')) return;
+  if (!currentScript) return;
+  const sid = currentScript.script ? currentScript.script.id : currentScript.id;
+  if (!confirm('Delete this script?')) return;
   try {
-    await api(`/api/script/${currentScript.id}`, {method:'DELETE'});
+    await api(`/api/script/${sid}`, {method:'DELETE'});
     currentScript = null;
     toast('Script deleted', 'success');
     await loadScripts();
@@ -502,12 +629,20 @@ $('#deleteScriptBtn').addEventListener('click', async () => {
   } catch { toast('Failed to delete', 'error'); }
 });
 
+function getScriptId() {
+  if (!currentScript) return null;
+  return currentScript.script ? currentScript.script.id : currentScript.id;
+}
+
 function renderScript() {
   const del = $('#deleteScriptBtn');
   const meta = $('#scriptMeta');
   const segs = $('#scriptSegments');
   const empty = $('#scriptEmpty');
-  if (!currentScript) {
+  const script = currentScript ? (currentScript.script || currentScript) : null;
+  const segments = currentScript ? (currentScript.segments || []) : [];
+
+  if (!script) {
     del.style.display = 'none';
     meta.innerHTML = '';
     segs.innerHTML = '';
@@ -516,46 +651,55 @@ function renderScript() {
     return;
   }
   del.style.display = '';
-  meta.innerHTML = `<span>${currentScript.target_duration ? 'Target: '+formatTime(currentScript.target_duration) : ''}</span><span>${currentScript.created_at ? new Date(currentScript.created_at).toLocaleDateString() : ''}</span>`;
+  const targetDur = script.target_duration_seconds || script.target_duration;
+  meta.innerHTML = `<span>${targetDur ? 'Target: '+formatTime(targetDur) : ''}</span><span>${script.created_at ? new Date(script.created_at).toLocaleDateString() : ''}</span>`;
   empty.style.display = 'none';
-  const segments = currentScript.segments || [];
+
   if (!segments.length) {
-    segs.innerHTML = '<div class="empty-state">No segments yet. Add from transcript or use AI Generate.</div>';
+    segs.innerHTML = '<div class="empty-state">No segments yet. Use AI Generate to create your edit.</div>';
     $('#scriptDuration').textContent = '0:00';
     return;
   }
+
   let totalDur = 0;
+  const sid = getScriptId();
   segs.innerHTML = segments.map((s, i) => {
     const dur = (s.end_time||0) - (s.start_time||0);
     totalDur += dur;
+    // Get transcript text for this segment from cache
+    let segText = s.notes || '';
+    if (!segText && clipTranscriptCache[s.clip_id]) {
+      const tsegs = clipTranscriptCache[s.clip_id].segments || [];
+      segText = tsegs.filter(ts => ts.start_time >= (s.start_time-0.5) && ts.end_time <= (s.end_time+0.5)).map(ts => ts.text).join(' ');
+    }
     return `<li class="segment-card" data-id="${s.id}">
       <div class="segment-top">
-        <input class="segment-name" value="${escHtml(s.section_name||'Segment '+(i+1))}" onchange="updateSegment('${s.id}',this.value)">
+        <input class="segment-name" value="${escHtml(s.section_name||'Segment '+(i+1))}" onchange="updateSegment(${sid},${s.id},this.value)">
         <div class="segment-actions">
           ${i>0?`<button onclick="moveSegment(${i},-1)" title="Move up">↑</button>`:'<button disabled>↑</button>'}
           ${i<segments.length-1?`<button onclick="moveSegment(${i},1)" title="Move down">↓</button>`:'<button disabled>↓</button>'}
-          <button onclick="removeSegment('${s.id}')" title="Remove" style="color:var(--accent)">✕</button>
+          <button onclick="removeSegment(${sid},${s.id})" title="Remove" style="color:var(--accent)">✕</button>
         </div>
       </div>
-      <div class="segment-clip">${escHtml(s.clip_name||s.clip_id||'')} [${formatTC(s.start_time||0)} → ${formatTC(s.end_time||0)}]</div>
-      ${s.text?`<div class="segment-text">${escHtml(s.text)}</div>`:''}
+      <div class="segment-clip">${escHtml(s.filename||'')} [${formatTC(s.start_time||0)} → ${formatTC(s.end_time||0)}] <span style="color:var(--text2);font-size:11px">(${formatTime(dur)})</span></div>
+      ${segText?`<div class="segment-text" style="-webkit-line-clamp:3">${escHtml(segText)}</div>`:''}
     </li>`;
   }).join('');
-  $('#scriptDuration').textContent = formatTime(totalDur);
+  $('#scriptDuration').textContent = `Total: ${formatTime(totalDur)}`;
 }
 
-async function updateSegment(segId, name) {
-  if (!currentScript) return;
+async function updateSegment(scriptId, segId, name) {
   try {
-    await api(`/api/script/${currentScript.id}/segment/${segId}`, {method:'PUT', body: JSON.stringify({section_name:name})});
+    await api(`/api/script/${scriptId}/segment/${segId}`, {method:'PUT', body: JSON.stringify({section_name:name})});
   } catch { toast('Update failed', 'error'); }
 }
 
-async function removeSegment(segId) {
-  if (!currentScript) return;
+async function removeSegment(scriptId, segId) {
   try {
-    await api(`/api/script/${currentScript.id}/segment/${segId}`, {method:'DELETE'});
-    currentScript.segments = (currentScript.segments||[]).filter(s=>s.id!==segId);
+    await api(`/api/script/${scriptId}/segment/${segId}`, {method:'DELETE'});
+    if (currentScript && currentScript.segments) {
+      currentScript.segments = currentScript.segments.filter(s => s.id !== segId);
+    }
     renderScript();
     toast('Segment removed', 'success');
   } catch { toast('Remove failed', 'error'); }
@@ -563,123 +707,102 @@ async function removeSegment(segId) {
 
 async function moveSegment(idx, dir) {
   if (!currentScript) return;
-  const segs = currentScript.segments||[];
-  const newIdx = idx+dir;
-  if (newIdx<0||newIdx>=segs.length) return;
-  [segs[idx],segs[newIdx]]=[segs[newIdx],segs[idx]];
+  const segs = currentScript.segments || [];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= segs.length) return;
+  [segs[idx], segs[newIdx]] = [segs[newIdx], segs[idx]];
   renderScript();
-  // Persist reorder by updating both segments
+  const sid = getScriptId();
   try {
-    await api(`/api/script/${currentScript.id}/segment/${segs[idx].id}`, {method:'PUT', body: JSON.stringify({order:idx})});
-    await api(`/api/script/${currentScript.id}/segment/${segs[newIdx].id}`, {method:'PUT', body: JSON.stringify({order:newIdx})});
+    await api(`/api/script/${sid}/segment/${segs[idx].id}`, {method:'PUT', body: JSON.stringify({order_index:idx})});
+    await api(`/api/script/${sid}/segment/${segs[newIdx].id}`, {method:'PUT', body: JSON.stringify({order_index:newIdx})});
   } catch {}
 }
 
-// Full transcript
-async function loadFullTranscript() {
-  try {
-    const d = await api('/api/transcript/full');
-    fullTranscript = d.clips || d.sections || d || [];
-    renderTranscript();
-  } catch {
-    $('#transcriptBody').innerHTML = '<div class="empty-state">No transcripts available. Transcribe clips first.</div>';
-  }
-}
-
-function renderTranscript(filter='') {
-  const body = $('#transcriptBody');
-  const f = filter.toLowerCase();
-  let html = '';
-  const data = Array.isArray(fullTranscript) ? fullTranscript : [];
-  if (!data.length) { body.innerHTML = '<div class="empty-state">No transcripts available.</div>'; return; }
-  data.forEach(clip => {
-    const lines = clip.lines || clip.segments || [];
-    const filteredLines = f ? lines.filter(l=>(l.text||l.content||'').toLowerCase().includes(f)) : lines;
-    if (f && !filteredLines.length) return;
-    html += `<div class="transcript-clip-section"><div class="transcript-clip-header">${escHtml(clip.filename||clip.name||clip.clip_id||'')}</div>`;
-    filteredLines.forEach(l => {
-      const text = l.text||l.content||'';
-      const highlighted = f ? text.replace(new RegExp(`(${f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`,'gi'),'<mark style="background:var(--accent);color:#fff;border-radius:2px;padding:0 2px">$1</mark>') : escHtml(text);
-      html += `<div class="transcript-segment${f && text.toLowerCase().includes(f)?' highlight':''}" onclick="addSegmentFromTranscript('${clip.clip_id||clip.id||''}',${l.start||l.time||0},${l.end||(l.start||0)+5},'${escHtml(text).replace(/'/g,"\\'")}')"><span class="tc">[${formatTC(l.start||l.time||0)}]</span>${highlighted}</div>`;
-    });
-    html += '</div>';
-  });
-  body.innerHTML = html || '<div class="empty-state">No matches found.</div>';
-}
-
-$('#transcriptSearch').addEventListener('input', e => renderTranscript(e.target.value));
-
-async function addSegmentFromTranscript(clipId, start, end, text) {
-  if (!currentScript) { toast('Select or create a script first'); return; }
-  try {
-    const seg = await api(`/api/script/${currentScript.id}/segments`, {method:'POST', body: JSON.stringify({clip_id:clipId, start_time:start, end_time:end, section_name:'Segment'})});
-    if (!currentScript.segments) currentScript.segments = [];
-    currentScript.segments.push({...seg, text, clip_id:clipId, start_time:start, end_time:end});
-    renderScript();
-    toast('Segment added', 'success');
-  } catch { toast('Failed to add segment', 'error'); }
-}
-
-$('#addAllBtn').addEventListener('click', async () => {
-  if (!currentScript) { toast('Select or create a script first'); return; }
-  if (!fullTranscript.length) return;
-  toast('Adding all segments...');
-  for (const clip of fullTranscript) {
-    const lines = clip.lines || clip.segments || [];
-    for (const l of lines) {
-      try {
-        await api(`/api/script/${currentScript.id}/segments`, {method:'POST', body: JSON.stringify({clip_id:clip.clip_id||clip.id, start_time:l.start||l.time||0, end_time:l.end||(l.start||0)+5, section_name:'Segment'})});
-      } catch {}
-    }
-  }
-  // Reload script
-  try { currentScript = await api(`/api/script/${currentScript.id}`); renderScript(); } catch {}
-  toast('All segments added!', 'success');
-});
-
 // AI Modal
+let selectedAiDuration = 120;
+
 $('#aiGenerateBtn').addEventListener('click', () => {
-  if (!currentScript) { toast('Select or create a script first'); return; }
+  if (!currentScript) { toast('Create or select a script first'); return; }
+  const selCount = selectedClipIds.size;
+  const totalClips = clips.filter(c => c.has_transcript).length;
+  $('#aiClipNote').textContent = selCount > 0
+    ? `Will use ${selCount} selected clip${selCount!==1?'s':''}`
+    : `Will use all ${totalClips} transcribed clips`;
   $('#aiModal').classList.add('active');
 });
+
 function closeModal() { $('#aiModal').classList.remove('active'); }
 $('#aiModal').addEventListener('click', e => { if (e.target === $('#aiModal')) closeModal(); });
-$('#aiDuration').addEventListener('change', e => {
-  $('#aiCustomDuration').style.display = e.target.value==='custom'?'':'none';
+
+// Duration preset buttons
+document.querySelectorAll('.dur-preset').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dur-preset').forEach(b => { b.classList.remove('btn-accent'); b.classList.add('btn-secondary'); });
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-accent');
+    selectedAiDuration = parseInt(btn.dataset.dur);
+    $('#aiCustomDuration').value = '';
+  });
 });
+$('#aiCustomDuration').addEventListener('input', e => {
+  if (e.target.value) {
+    document.querySelectorAll('.dur-preset').forEach(b => { b.classList.remove('btn-accent'); b.classList.add('btn-secondary'); });
+    selectedAiDuration = parseInt(e.target.value) || 120;
+  }
+});
+
 $('#aiSubmitBtn').addEventListener('click', async () => {
-  const durSel = $('#aiDuration').value;
-  const duration = durSel==='custom' ? parseInt($('#aiCustomDuration').value)||60 : parseInt(durSel);
+  const duration = $('#aiCustomDuration').value ? parseInt($('#aiCustomDuration').value) : selectedAiDuration;
   const style = $('#aiStyle').value;
   const prompt = $('#aiPrompt').value;
+  const clip_ids = selectedClipIds.size > 0 ? [...selectedClipIds] : null;
+  const sid = getScriptId();
+
   closeModal();
-  toast('Generating script with AI...');
+  toast('🤖 Generating script with AI... This may take a minute.');
+  $('#aiGenerateBtn').disabled = true;
+  $('#aiGenerateBtn').textContent = '⏳ Generating...';
+
   try {
-    const d = await api('/api/ai/auto-edit', {method:'POST', body: JSON.stringify({target_duration:duration, style, prompt, script_id:currentScript.id})});
-    toast('AI script generated!', 'success');
-    currentScript = await api(`/api/script/${currentScript.id}`);
+    const d = await api('/api/ai/auto-edit', {method:'POST', body: JSON.stringify({target_duration: duration, style, prompt, clip_ids, script_id: sid})});
+    if (d.error) { toast('AI error: ' + d.error, 'error'); return; }
+    toast('✨ AI script generated!', 'success');
+    // Reload the script (AI creates segments on the current script or a new one)
+    const loadId = d.script_id || sid;
+    currentScript = await api(`/api/script/${loadId}`);
+    await loadScripts();
+    $('#scriptSelect').value = loadId;
     renderScript();
-  } catch { toast('AI generation failed', 'error'); }
+  } catch(e) { toast('AI generation failed: ' + e.message, 'error'); }
+  finally {
+    $('#aiGenerateBtn').disabled = false;
+    $('#aiGenerateBtn').textContent = '✨ AI Generate';
+  }
 });
 
 // Export
 $('#sendResolveBtn').addEventListener('click', async () => {
-  if (!currentScript) { toast('No script selected'); return; }
+  const sid = getScriptId();
+  if (!sid) { toast('No script selected'); return; }
   toast('Sending to Resolve...');
   try {
-    await api(`/api/export/resolve/${currentScript.id}`, {method:'POST'});
-    toast('Timeline created in Resolve!', 'success');
+    const d = await api(`/api/export/resolve/${sid}`, {method:'POST'});
+    if (d.error) toast('Error: ' + d.error, 'error');
+    else toast(`Timeline "${d.timeline_name}" created! ${d.segments_added}/${d.total_segments} segments added.`, 'success');
   } catch { toast('Failed to send to Resolve', 'error'); }
 });
 
 $('#exportEdlBtn').addEventListener('click', async () => {
-  if (!currentScript) { toast('No script selected'); return; }
+  const sid = getScriptId();
+  if (!sid) { toast('No script selected'); return; }
   try {
-    const r = await fetch(`/api/export/edl/${currentScript.id}`);
+    const r = await fetch(`/api/export/edl/${sid}`, {method:'POST'});
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `${currentScript.name||'script'}.edl`; a.click();
+    const name = currentScript?.script?.name || currentScript?.name || 'script';
+    a.href = url; a.download = `${name}.edl`; a.click();
     URL.revokeObjectURL(url);
   } catch { toast('Export failed', 'error'); }
 });

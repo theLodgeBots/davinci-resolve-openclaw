@@ -475,11 +475,17 @@ def ai_request(prompt, system="You are a professional video editor.", model="gpt
     return result['choices'][0]['message']['content']
 
 
-def do_ai_auto_edit(target_duration=120, style="highlight reel"):
-    """Generate an AI edit plan from all transcripts."""
+def do_ai_auto_edit(target_duration=120, style="highlight reel", clip_ids=None, script_id=None):
+    """Generate an AI edit plan from transcripts. If clip_ids provided, only use those clips."""
     # Collect all clips and transcripts
     all_clips = db.get_all_clips(DB_PATH)
     all_segments = db.get_full_transcript(DB_PATH)
+
+    # Filter to selected clips if specified
+    if clip_ids:
+        clip_id_set = set(clip_ids)
+        all_clips = [c for c in all_clips if c['id'] in clip_id_set]
+        all_segments = [s for s in all_segments if s['clip_id'] in clip_id_set]
 
     if not all_segments:
         return {'error': 'No transcripts available. Transcribe clips first.'}
@@ -556,10 +562,19 @@ Rules:
 
         edit_plan = json.loads(cleaned)
 
-        # Create script and segments in DB
+        # Create script and segments in DB (or use existing script_id)
         script_name = edit_plan.get('name', f'{style.title()} - {duration_desc}')
-        script_id = db.create_script(DB_PATH, script_name, style, target_duration,
-                                      prompt[:500])
+        if script_id:
+            # Clear existing segments and update the script
+            conn = db.get_db(DB_PATH)
+            conn.execute("DELETE FROM script_segments WHERE script_id=?", (script_id,))
+            conn.execute("UPDATE scripts SET name=?, description=?, target_duration_seconds=?, ai_prompt=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                        (script_name, style, target_duration, prompt[:500], script_id))
+            conn.commit()
+            conn.close()
+        else:
+            script_id = db.create_script(DB_PATH, script_name, style, target_duration,
+                                          prompt[:500])
 
         sections = edit_plan.get('sections', [])
         for i, sec in enumerate(sections):
@@ -863,7 +878,9 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             body = self.read_body()
             target_duration = body.get('target_duration', 120)
             style = body.get('style', 'highlight reel')
-            result = do_ai_auto_edit(target_duration, style)
+            clip_ids = body.get('clip_ids')
+            script_id = body.get('script_id')
+            result = do_ai_auto_edit(target_duration, style, clip_ids=clip_ids, script_id=script_id)
             self.send_json(result)
 
         elif re.match(r'/api/export/resolve/(\d+)$', path) and method == 'POST':
