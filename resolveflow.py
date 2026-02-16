@@ -26,6 +26,16 @@ _transcription_progress = {'running': False, 'current': '', 'done': 0, 'total': 
 UI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resolveflow_ui.html')
 
 
+def detect_camera(relative_path, filename):
+    """Detect camera from path and filename."""
+    rel_lower = relative_path.lower()
+    if rel_lower.startswith('sony/') or rel_lower.startswith('sony\\') or filename.upper().startswith('C'):
+        return 'Sony'
+    if rel_lower.startswith('dji/') or rel_lower.startswith('dji\\') or filename.upper().startswith('DJI'):
+        return 'DJI'
+    return 'Unknown'
+
+
 def scan_videos(directory):
     clips = []
     for root, _, files in os.walk(directory):
@@ -42,6 +52,7 @@ def scan_videos(directory):
             meta['relative_path'] = rel
             meta['full_path'] = full
             meta['file_size_bytes'] = os.path.getsize(full)
+            meta['camera'] = detect_camera(rel, f)
             clips.append(meta)
     return clips
 
@@ -364,6 +375,14 @@ def do_transcribe_resolve():
 def do_ingest():
     clips = scan_videos(PROJECT_DIR)
     added = db.import_clips_from_scan(DB_PATH, clips)
+    # Update camera field for existing clips that have camera=NULL
+    conn = db.get_db(DB_PATH)
+    rows = conn.execute("SELECT id, relative_path, filename FROM clips WHERE camera IS NULL OR camera = ''").fetchall()
+    for row in rows:
+        cam = detect_camera(row['relative_path'], row['filename'])
+        conn.execute("UPDATE clips SET camera=? WHERE id=?", (cam, row['id']))
+    conn.commit()
+    conn.close()
     generate_all_thumbnails()
     return added
 
@@ -729,9 +748,18 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
                 except Exception:
                     pass
 
+            # Get transcript previews
+            preview_map = {}
+            conn2 = db.get_db(DB_PATH)
+            for row in conn2.execute("SELECT clip_id, full_text FROM transcripts").fetchall():
+                txt = row['full_text'] or ''
+                preview_map[row['clip_id']] = txt[:120] if txt else ''
+            conn2.close()
+
             for c in clips_data:
                 c['has_transcript'] = c['id'] in transcribed_ids
                 c['resolve_transcription_status'] = resolve_status_map.get(c['filename'], '')
+                c['transcript_preview'] = preview_map.get(c['id'], '')
             self.send_json(clips_data)
 
         elif re.match(r'/api/clip/(\d+)$', path) and method == 'GET':

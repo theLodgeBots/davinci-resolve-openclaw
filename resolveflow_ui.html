@@ -156,6 +156,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 
 <!-- Clips Tab -->
 <div class="tab-content active" id="tab-clips">
+  <!-- Summary Stats Bar -->
+  <div class="clips-stats" id="clipsStats" style="display:flex;align-items:center;gap:20px;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap;font-size:13px;color:var(--text2)">
+  </div>
+  <!-- Filter/Sort Controls -->
+  <div class="clips-filters" style="display:flex;align-items:center;gap:10px;padding:10px 20px;flex-wrap:wrap;font-size:13px;border-bottom:1px solid var(--border)">
+    <span style="color:var(--text2);font-weight:600">Device:</span>
+    <div id="deviceFilters" style="display:flex;gap:4px"></div>
+    <span style="color:var(--text2);font-weight:600;margin-left:12px">Status:</span>
+    <div id="statusFilters" style="display:flex;gap:4px"></div>
+    <span style="color:var(--text2);font-weight:600;margin-left:12px">Sort:</span>
+    <select id="sortSelect" style="padding:4px 8px;font-size:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:4px">
+      <option value="name">Name</option>
+      <option value="duration">Duration</option>
+      <option value="device">Device</option>
+    </select>
+  </div>
   <div class="clips-toolbar">
     <input type="text" class="search-input" id="clipSearch" placeholder="Search clips...">
     <button class="btn btn-accent" id="transcribeAllBtn">Transcribe All</button>
@@ -243,6 +259,9 @@ let scripts = [];
 let currentScript = null;
 let fullTranscript = [];
 let expandedClip = null;
+let activeDeviceFilter = 'All';
+let activeStatusFilter = 'All';
+let activeSort = 'name';
 
 // Helpers
 const $ = s => document.querySelector(s);
@@ -315,8 +334,10 @@ async function loadClips() {
   try {
     const d = await api('/api/clips');
     clips = d.clips || d || [];
+    renderStats();
+    renderFilterChips();
     renderClips();
-    const total = clips.reduce((a,c) => a + (c.duration||0), 0);
+    const total = clips.reduce((a,c) => a + (c.duration_seconds||0), 0);
     $('#clipCount').textContent = `${clips.length} clips`;
     $('#totalDuration').textContent = formatTime(total);
   } catch(e) {
@@ -324,34 +345,83 @@ async function loadClips() {
   }
 }
 
-function renderClips(filter='') {
+function renderStats() {
+  const total = clips.length;
+  const totalDur = clips.reduce((a,c) => a + (c.duration_seconds||0), 0);
+  const devices = {};
+  clips.forEach(c => { const d = c.camera || 'Unknown'; devices[d] = (devices[d]||0) + 1; });
+  const transcribed = clips.filter(c => c.has_transcript).length;
+  const deviceParts = Object.entries(devices).map(([k,v]) =>
+    `<span class="filter-chip${activeDeviceFilter===k?' active':''}" onclick="setDeviceFilter('${k}')" style="cursor:pointer;padding:2px 8px;border-radius:12px;background:${activeDeviceFilter===k?'var(--accent)':'var(--surface2)'};color:var(--text);font-size:12px">${k} (${v})</span>`
+  ).join(' ');
+  $('#clipsStats').innerHTML = `
+    <span><strong>${total}</strong> clips</span>
+    <span><strong>${formatTime(totalDur)}</strong> total</span>
+    <span>Devices: ${deviceParts}</span>
+    <span>Transcribed: <strong>${transcribed}/${total}</strong></span>
+  `;
+}
+
+function renderFilterChips() {
+  const devices = ['All', ...new Set(clips.map(c => c.camera || 'Unknown'))];
+  $('#deviceFilters').innerHTML = devices.map(d =>
+    `<button onclick="setDeviceFilter('${d}')" style="padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:${activeDeviceFilter===d?'var(--accent)':'var(--surface2)'};color:var(--text);font-size:12px;cursor:pointer">${d}</button>`
+  ).join('');
+  const statuses = ['All','Transcribed','Pending'];
+  $('#statusFilters').innerHTML = statuses.map(s =>
+    `<button onclick="setStatusFilter('${s}')" style="padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:${activeStatusFilter===s?'var(--accent)':'var(--surface2)'};color:var(--text);font-size:12px;cursor:pointer">${s}</button>`
+  ).join('');
+}
+
+function setDeviceFilter(d) { activeDeviceFilter = d; renderFilterChips(); renderStats(); renderClips(); }
+function setStatusFilter(s) { activeStatusFilter = s; renderFilterChips(); renderClips(); }
+
+function getFilteredClips(searchFilter) {
+  let result = clips;
+  const f = (searchFilter||'').toLowerCase();
+  if (f) result = result.filter(c => (c.filename||'').toLowerCase().includes(f));
+  if (activeDeviceFilter !== 'All') result = result.filter(c => (c.camera||'Unknown') === activeDeviceFilter);
+  if (activeStatusFilter === 'Transcribed') result = result.filter(c => c.has_transcript);
+  if (activeStatusFilter === 'Pending') result = result.filter(c => !c.has_transcript);
+  // Sort
+  const sort = $('#sortSelect').value || activeSort;
+  result = [...result].sort((a,b) => {
+    if (sort === 'duration') return (b.duration_seconds||0) - (a.duration_seconds||0);
+    if (sort === 'device') return (a.camera||'').localeCompare(b.camera||'');
+    return (a.filename||'').localeCompare(b.filename||'');
+  });
+  return result;
+}
+
+function renderClips(filter) {
+  if (filter === undefined) filter = $('#clipSearch').value || '';
   const grid = $('#clipsGrid');
-  const f = filter.toLowerCase();
-  const filtered = f ? clips.filter(c => (c.filename||c.name||'').toLowerCase().includes(f)) : clips;
+  const filtered = getFilteredClips(filter);
   if (!filtered.length) {
     grid.innerHTML = '<div class="empty-state">No clips found.</div>';
     return;
   }
   grid.innerHTML = filtered.map(c => {
-    const name = c.filename || c.name || 'Untitled';
-    const dur = formatTime(c.duration);
-    const cam = c.camera || '';
-    const hasTranscript = c.transcribed || c.transcript;
-    const preview = c.transcript_preview || (c.transcript ? c.transcript.substring(0,100) : '');
+    const name = c.filename || 'Untitled';
+    const dur = formatTime(c.duration_seconds);
+    const cam = c.camera || 'Unknown';
+    const hasTranscript = c.has_transcript || c.resolve_transcription_status === 'Transcribed';
+    const preview = c.transcript_preview || '';
     const expanded = expandedClip === c.id;
+    const camColor = cam === 'Sony' ? '#3b82f6' : cam === 'DJI' ? '#22c55e' : '#6b7280';
     return `<div class="clip-card${expanded?' expanded':''}" data-id="${c.id}" onclick="toggleClip('${c.id}')">
       <div class="clip-top">
-        <div class="clip-thumb">${c.thumbnail ? `<img src="${c.thumbnail}" alt="">` : '🎬'}</div>
+        <div class="clip-thumb"><img src="/api/thumbnails/${c.id}" alt="" onerror="this.parentElement.innerHTML='🎬'"></div>
         <div class="clip-info">
-          <div class="clip-filename" title="${name}">${name}</div>
+          <div class="clip-filename" title="${name}">${escHtml(name)}</div>
           <div class="clip-meta">
             <span>${dur}</span>
-            ${cam ? `<span class="clip-badge">${cam}</span>` : ''}
-            <span class="clip-badge ${hasTranscript?'transcribed':'pending'}">${hasTranscript?'Transcribed':'Pending'}</span>
+            <span class="clip-badge" style="background:${camColor}">${cam}</span>
+            <span class="clip-badge ${hasTranscript?'transcribed':'pending'}">${hasTranscript?'✓ Transcribed':'⏳ Pending'}</span>
           </div>
         </div>
       </div>
-      ${preview ? `<div class="clip-preview">${escHtml(preview)}...</div>` : ''}
+      ${preview ? `<div class="clip-preview">${escHtml(preview)}</div>` : ''}
       <div class="clip-transcript" id="transcript-${c.id}"></div>
     </div>`;
   }).join('');
@@ -379,6 +449,7 @@ async function toggleClip(id) {
 }
 
 $('#clipSearch').addEventListener('input', e => renderClips(e.target.value));
+$('#sortSelect').addEventListener('change', () => renderClips());
 
 $('#transcribeAllBtn').addEventListener('click', async () => {
   toast('Starting transcription...');
