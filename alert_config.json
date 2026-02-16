@@ -1,0 +1,21 @@
+{
+  "smtp_server": "smtp.gmail.com",
+  "smtp_port": 587,
+  "email_user": "",
+  "email_password": "",
+  "admin_emails": [
+    "admin@thelodgestudio.com"
+  ],
+  "slack_webhook": "",
+  "slack_channel": "#davinci-alerts",
+  "discord_webhook": "",
+  "cpu_threshold": 85.0,
+  "memory_threshold": 80.0,
+  "disk_threshold": 85.0,
+  "processing_time_threshold": 300,
+  "error_rate_threshold": 0.05,
+  "min_alert_interval": 300,
+  "max_alerts_per_hour": 8,
+  "business_start_hour": 9,
+  "business_end_hour": 17
+}

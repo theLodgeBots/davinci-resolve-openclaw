@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ResolveFlow — AI video script editor. Run: python3 resolveflow.py [directory]"""
 
-import sys, os, json, subprocess, threading, webbrowser, re, tempfile, shutil
+import sys, os, json, subprocess, threading, webbrowser, re, tempfile, shutil, time
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
@@ -14,6 +14,10 @@ DB_PATH = None
 RF_DIR = None
 THUMB_DIR = None
 UI_HTML = None
+
+# DaVinci Resolve connection
+_resolve = None
+_resolve_lock = threading.Lock()
 
 # Load UI HTML once
 UI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resolveflow_ui.html')
@@ -97,6 +101,250 @@ def generate_all_thumbnails():
             conn.execute("UPDATE clips SET thumbnail_path=? WHERE id=?", (tp, c['id']))
     conn.commit()
     conn.close()
+
+
+def connect_resolve():
+    """Connect to DaVinci Resolve scripting API. Returns resolve object or None."""
+    global _resolve
+    with _resolve_lock:
+        try:
+            sys.path.insert(0, '/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting/Modules')
+            import DaVinciResolveScript as dvr
+            _resolve = dvr.scriptapp('Resolve')
+            if _resolve and _resolve.GetProductName():
+                return _resolve
+            _resolve = None
+        except Exception:
+            _resolve = None
+    return _resolve
+
+
+def get_resolve():
+    """Get existing Resolve connection or try to connect."""
+    global _resolve
+    if _resolve:
+        try:
+            _resolve.GetProductName()
+            return _resolve
+        except Exception:
+            _resolve = None
+    return connect_resolve()
+
+
+def get_resolve_status():
+    """Return dict with Resolve connection info."""
+    resolve = get_resolve()
+    if not resolve:
+        return {'connected': False}
+    try:
+        pm = resolve.GetProjectManager()
+        proj = pm.GetCurrentProject()
+        tl = proj.GetCurrentTimeline() if proj else None
+        return {
+            'connected': True,
+            'product': resolve.GetProductName(),
+            'version': resolve.GetVersionString(),
+            'project': proj.GetName() if proj else None,
+            'timeline': tl.GetName() if tl else None,
+            'fps': float(tl.GetSetting('timelineFrameRate')) if tl else None
+        }
+    except Exception as e:
+        return {'connected': True, 'error': str(e)}
+
+
+def get_resolve_media_pool_clips():
+    """Recursively get all media pool clips from Resolve."""
+    resolve = get_resolve()
+    if not resolve:
+        return []
+    try:
+        pm = resolve.GetProjectManager()
+        proj = pm.GetCurrentProject()
+        pool = proj.GetMediaPool()
+        root = pool.GetRootFolder()
+        clips = []
+        def walk(folder):
+            for clip in (folder.GetClipList() or []):
+                clips.append(clip)
+            for sub in (folder.GetSubFolderList() or []):
+                walk(sub)
+        walk(root)
+        return clips
+    except Exception:
+        return []
+
+
+def read_resolve_subtitles():
+    """Read subtitle items from the current timeline's subtitle track."""
+    resolve = get_resolve()
+    if not resolve:
+        return []
+    try:
+        pm = resolve.GetProjectManager()
+        proj = pm.GetCurrentProject()
+        tl = proj.GetCurrentTimeline()
+        if not tl:
+            return []
+        fps = float(tl.GetSetting('timelineFrameRate') or 24)
+        subtitle_count = tl.GetTrackCount('subtitle')
+        items = []
+        for track_idx in range(1, subtitle_count + 1):
+            for item in (tl.GetItemListInTrack('subtitle', track_idx) or []):
+                try:
+                    text = item.GetName()
+                    start_frame = item.GetStart()
+                    end_frame = item.GetEnd()
+                    items.append({
+                        'text': text,
+                        'start': start_frame / fps,
+                        'end': end_frame / fps,
+                        'start_frame': start_frame,
+                        'end_frame': end_frame,
+                    })
+                except Exception:
+                    pass
+        return items
+    except Exception:
+        return []
+
+
+def do_transcribe_resolve():
+    """Transcribe clips using DaVinci Resolve's built-in transcription."""
+    resolve = get_resolve()
+    if not resolve:
+        return {'error': 'DaVinci Resolve not connected'}
+
+    try:
+        pm = resolve.GetProjectManager()
+        proj = pm.GetCurrentProject()
+        pool = proj.GetMediaPool()
+        tl = proj.GetCurrentTimeline()
+        if not tl:
+            return {'error': 'No timeline open in Resolve'}
+        fps = float(tl.GetSetting('timelineFrameRate') or 24)
+    except Exception as e:
+        return {'error': f'Resolve API error: {e}'}
+
+    # Get all media pool clips
+    resolve_clips = get_resolve_media_pool_clips()
+
+    # Step 1: Trigger transcription on clips that aren't transcribed yet
+    triggered = 0
+    for clip in resolve_clips:
+        try:
+            props = clip.GetClipProperty()
+            status = props.get('Transcription Status', '') if props else ''
+            if status != 'Transcribed':
+                clip.TranscribeAudio()
+                triggered += 1
+        except Exception:
+            pass
+
+    # If we triggered any, wait a bit for them to complete
+    if triggered > 0:
+        time.sleep(2)
+        # Poll for completion (up to 5 min)
+        for _ in range(150):
+            all_done = True
+            for clip in resolve_clips:
+                try:
+                    props = clip.GetClipProperty()
+                    status = props.get('Transcription Status', '') if props else ''
+                    if status not in ('Transcribed', '', 'Not Applicable'):
+                        all_done = False
+                        break
+                except Exception:
+                    pass
+            if all_done:
+                break
+            time.sleep(2)
+
+    # Step 2: Create subtitles from audio on the current timeline
+    try:
+        tl.CreateSubtitlesFromAudio()
+        time.sleep(2)
+    except Exception:
+        pass
+
+    # Step 3: Read subtitle items and map to DB clips
+    subtitle_items = read_resolve_subtitles()
+    if not subtitle_items:
+        return {'error': 'No subtitle items found after transcription', 'triggered': triggered}
+
+    # Get DB clips and build filename lookup
+    db_clips = db.get_all_clips(DB_PATH)
+
+    # Get timeline video items to map frame positions to source clips
+    video_items = []
+    try:
+        track_count = tl.GetTrackCount('video')
+        for track_idx in range(1, track_count + 1):
+            for item in (tl.GetItemListInTrack('video', track_idx) or []):
+                try:
+                    mpi = item.GetMediaPoolItem()
+                    if mpi:
+                        props = mpi.GetClipProperty()
+                        fname = props.get('File Name', '') if props else ''
+                        video_items.append({
+                            'start': item.GetStart(),
+                            'end': item.GetEnd(),
+                            'filename': fname,
+                            'media_pool_item': mpi
+                        })
+                except Exception:
+                    pass
+    except Exception:
+        pass
+
+    # Build map: filename -> db clip id
+    fname_to_clip = {}
+    for c in db_clips:
+        fname_to_clip[c['filename']] = c['id']
+
+    # Map each subtitle to a source clip via timeline position
+    clip_transcripts = {}  # clip_id -> list of segments
+    for sub in subtitle_items:
+        sub_mid_frame = (sub['start'] * fps + sub['end'] * fps) / 2
+        matched_clip_id = None
+        matched_item_start = 0
+
+        for vi in video_items:
+            if vi['start'] <= sub_mid_frame * fps <= vi['end']:
+                if vi['filename'] in fname_to_clip:
+                    matched_clip_id = fname_to_clip[vi['filename']]
+                    matched_item_start = vi['start'] / fps
+                break
+
+        if matched_clip_id is None:
+            # Try first DB clip as fallback (single-clip timelines)
+            if len(db_clips) == 1:
+                matched_clip_id = db_clips[0]['id']
+            else:
+                continue
+
+        if matched_clip_id not in clip_transcripts:
+            clip_transcripts[matched_clip_id] = []
+        clip_transcripts[matched_clip_id].append({
+            'text': sub['text'],
+            'start': sub['start'] - matched_item_start,
+            'end': sub['end'] - matched_item_start,
+        })
+
+    # Step 4: Save to DB
+    saved = 0
+    for clip_id, segments in clip_transcripts.items():
+        # Skip if already transcribed in DB
+        existing = db.get_clip_transcript(DB_PATH, clip_id)
+        if existing:
+            continue
+        full_text = ' '.join(s['text'] for s in segments)
+        db.save_transcript(DB_PATH, clip_id, full_text, segments, 
+                          {'source': 'resolve', 'subtitle_count': len(segments)},
+                          duration=segments[-1]['end'] if segments else 0,
+                          language='en', method='resolve')
+        saved += 1
+
+    return {'transcribed': saved, 'total_subtitles': len(subtitle_items), 'triggered': triggered}
 
 
 def do_ingest():
@@ -269,7 +517,26 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
                 'total_duration': total_dur
             })
         elif path == '/api/clips' and method == 'GET':
-            self.send_json(db.get_all_clips(DB_PATH))
+            clips_data = db.get_all_clips(DB_PATH)
+            # Enrich with Resolve transcription status
+            resolve = get_resolve()
+            if resolve:
+                try:
+                    resolve_clips = get_resolve_media_pool_clips()
+                    resolve_status = {}
+                    for rc in resolve_clips:
+                        try:
+                            props = rc.GetClipProperty()
+                            if props:
+                                fname = props.get('File Name', '')
+                                resolve_status[fname] = props.get('Transcription Status', '')
+                        except Exception:
+                            pass
+                    for c in clips_data:
+                        c['resolve_transcription_status'] = resolve_status.get(c['filename'], '')
+                except Exception:
+                    pass
+            self.send_json(clips_data)
         elif re.match(r'/api/clip/(\d+)$', path) and method == 'GET':
             cid = int(re.match(r'/api/clip/(\d+)', path).group(1))
             clip = db.get_clip(DB_PATH, cid)
@@ -284,13 +551,26 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             cid = int(re.match(r'/api/transcript/(\d+)', path).group(1))
             t = db.get_clip_transcript(DB_PATH, cid)
             self.send_json(t if t else {'error': 'no transcript'}, 200 if t else 404)
+        elif path == '/api/resolve/status' and method == 'GET':
+            self.send_json(get_resolve_status())
+        elif path == '/api/resolve/subtitles' and method == 'GET':
+            self.send_json(read_resolve_subtitles())
         elif path == '/api/transcribe' and method == 'POST':
-            def run():
-                result = do_transcribe()
-                print(f"Transcription complete: {result}")
-            threading.Thread(target=run, daemon=True).start()
-            remaining = len(db.get_untranscribed_clip_ids(DB_PATH))
-            self.send_json({'status': 'started', 'clips_to_transcribe': remaining})
+            body = self.read_body() if self.headers.get('Content-Length') else {}
+            use_whisper = body.get('method') == 'whisper'
+            if use_whisper:
+                def run():
+                    result = do_transcribe()
+                    print(f"Whisper transcription complete: {result}")
+                threading.Thread(target=run, daemon=True).start()
+                remaining = len(db.get_untranscribed_clip_ids(DB_PATH))
+                self.send_json({'status': 'started', 'method': 'whisper', 'clips_to_transcribe': remaining})
+            else:
+                def run():
+                    result = do_transcribe_resolve()
+                    print(f"Resolve transcription complete: {result}")
+                threading.Thread(target=run, daemon=True).start()
+                self.send_json({'status': 'started', 'method': 'resolve'})
         elif path == '/api/scripts' and method == 'GET':
             self.send_json(db.get_all_scripts(DB_PATH))
         elif path == '/api/scripts' and method == 'POST':
@@ -419,7 +699,16 @@ def main():
     total = sum(c.get('duration_seconds') or 0 for c in clips)
     print(f"Total duration: {total:.1f}s ({total/60:.1f}m)")
 
+    # Try connecting to DaVinci Resolve
+    resolve = connect_resolve()
+    if resolve:
+        status = get_resolve_status()
+        print(f"DaVinci Resolve: Connected — {status.get('project', '?')}")
+    else:
+        print("DaVinci Resolve: Not connected (will retry on API calls)")
+
     port = int(os.environ.get('PORT', '8080'))
+    no_browser = '--no-browser' in sys.argv
     import socket
     class ReusableHTTPServer(HTTPServer):
         allow_reuse_address = True
@@ -430,7 +719,8 @@ def main():
     print(f"Server: http://localhost:{port}")
 
     # Open browser
-    threading.Timer(1, lambda: webbrowser.open(f'http://localhost:{port}')).start()
+    if not no_browser:
+        threading.Timer(1, lambda: webbrowser.open(f'http://localhost:{port}')).start()
 
     try:
         server.serve_forever()

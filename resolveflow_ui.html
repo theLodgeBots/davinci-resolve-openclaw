@@ -96,9 +96,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 <div id="header">
   <h1>⚡ ResolveFlow</h1>
   <span class="stats" id="project-stats">Loading...</span>
+  <span id="resolve-status" style="font-size:12px;display:flex;align-items:center;gap:4px;" title="DaVinci Resolve">
+    <span id="resolve-dot" style="width:8px;height:8px;border-radius:50%;background:#666;display:inline-block;"></span>
+    <span id="resolve-label" style="color:var(--text2);">Resolve</span>
+  </span>
   <div class="actions">
     <button class="btn-secondary" onclick="doIngest()">📥 Ingest</button>
-    <button class="btn-primary" onclick="doTranscribe()">🎙️ Transcribe All</button>
+    <button class="btn-primary" onclick="doTranscribe()">🎙️ Transcribe via Resolve</button>
     <button class="btn-green" onclick="newScript()">📝 New Script</button>
   </div>
 </div>
@@ -193,6 +197,26 @@ async function init() {
   document.title = `ResolveFlow — ${proj.name}`;
   await loadClips();
   await loadScripts();
+  await checkResolveStatus();
+}
+
+async function checkResolveStatus() {
+  try {
+    const s = await api('/resolve/status');
+    const dot = document.getElementById('resolve-dot');
+    const label = document.getElementById('resolve-label');
+    if (s.connected) {
+      dot.style.background = 'var(--green)';
+      label.textContent = s.project ? `Resolve: ${s.project}` : 'Resolve ✓';
+      label.style.color = 'var(--green)';
+    } else {
+      dot.style.background = '#e94560';
+      label.textContent = 'Resolve ✗';
+      label.style.color = '#e94560';
+    }
+  } catch(e) {}
+  // Re-check every 30s
+  setTimeout(checkResolveStatus, 30000);
 }
 
 // --- Clips ---
@@ -209,7 +233,7 @@ function renderClips(list) {
       <img class="clip-thumb" src="/api/thumbnails/${c.id}" onerror="this.style.display='none'" loading="lazy">
       <div class="clip-info">
         <div class="clip-name" title="${c.filename}">${c.filename}</div>
-        <div class="clip-meta">${fmtTime(c.duration_seconds)} · ${c.resolution || '?'} ${c.camera ? '· <span class=clip-badge>'+c.camera+'</span>' : ''}</div>
+        <div class="clip-meta">${fmtTime(c.duration_seconds)} · ${c.resolution || '?'} ${c.camera ? '· <span class=clip-badge>'+c.camera+'</span>' : ''} ${c.resolve_transcription_status === 'Transcribed' ? '· <span style="color:var(--green);font-size:10px;">✓ Transcribed</span>' : ''}</div>
       </div>
     </div>
   `).join('');
@@ -389,9 +413,8 @@ async function doIngest() {
 }
 
 async function doTranscribe() {
-  if (!confirm('Start transcription? This uses the OpenAI Whisper API and costs money.')) return;
   const r = await api('/transcribe', { method: 'POST' });
-  alert(`Transcription started for ${r.clips_to_transcribe} clips. Check console for progress.`);
+  alert(`Transcription started via DaVinci Resolve. Check console for progress.`);
 }
 
 async function newScript() {

@@ -1,0 +1,106 @@
+# 🐳 DaVinci Resolve OpenClaw - Docker Ignore
+# Exclude unnecessary files from Docker build context
+
+# Git
+.git/
+.gitignore
+*.git
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+/var/log/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.temp
+
+# Large data files (mount as volumes instead)
+/renders/
+/exports/
+/transcripts/
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wav
+*.mp3
+*.m4a
+
+# Development files
+docker-compose.override.yml
+.env.local
+.env.development
+.env.test
+
+# Documentation (not needed in production)
+*.md
+docs/
+
+# Test files
+test_*
+*_test.py
+tests/
+
+# Performance reports
+optimization_report_*.json
+workflow_validation_report_*.json
+
+# Cache files
+*.cache
+.cache/
+optimization_cache/
+
+# Database files (mount as volumes)
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup

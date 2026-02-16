@@ -1,0 +1,64 @@
+{
+  "report_generated": "2026-02-15T05:02:22.120610",
+  "time_range": {
+    "start": "2026-02-15T04:02:22.120610",
+    "end": "2026-02-15T05:02:22.120610",
+    "hours": 1
+  },
+  "system_performance": {
+    "status": "success",
+    "sample_count": 1,
+    "cpu": {
+      "average": 1.2,
+      "max": 1.2,
+      "min": 1.2
+    },
+    "memory": {
+      "average": 53.5,
+      "max": 53.5,
+      "min": 53.5
+    },
+    "disk": {
+      "average": 1.4,
+      "max": 1.4,
+      "min": 1.4
+    }
+  },
+  "processing_performance": {
+    "status": "success",
+    "total_projects": 1,
+    "success_rate": 1.0,
+    "processing_time": {
+      "average": 300.0,
+      "max": 300.0,
+      "min": 300.0
+    },
+    "quality_score": {
+      "average": 0.85,
+      "max": 0.85,
+      "min": 0.85
+    },
+    "total_videos_processed": 5
+  },
+  "sla_compliance": {
+    "status": "success",
+    "total_projects": 1,
+    "sla_targets": {
+      "processing_time_max": 900,
+      "quality_score_min": 0.8,
+      "success_rate_min": 0.95,
+      "availability_target": 0.99
+    },
+    "compliance_rates": {
+      "processing_time": 1.0,
+      "quality_score": 1.0,
+      "success_rate": 1.0
+    }
+  },
+  "alerts_summary": {
+    "status": "success",
+    "total_alerts": 0,
+    "alert_counts": {}
+  },
+  "recommendations": []
+}

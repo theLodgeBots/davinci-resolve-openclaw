@@ -1,0 +1,282 @@
+{
+  "timestamp": "2026-02-15T03:31:11.214811",
+  "total_tests": 7,
+  "passed": 6,
+  "failed": 1,
+  "warnings": 0,
+  "skipped": 0,
+  "total_duration_ms": 498,
+  "overall_status": "FAILED",
+  "results": [
+    {
+      "test_name": "Environment Validation",
+      "category": "Environment",
+      "status": "passed",
+      "duration_ms": 225,
+      "message": "All 5 critical modules available",
+      "details": {
+        "python_version": "3.9.6",
+        "module_json": "available",
+        "module_subprocess": "available",
+        "module_pathlib": "available",
+        "module_openai": "available",
+        "module_requests": "available"
+      },
+      "performance_metrics": {}
+    },
+    {
+      "test_name": "External Tools Check",
+      "category": "External",
+      "status": "passed",
+      "duration_ms": 13,
+      "message": "All external tools available",
+      "details": {
+        "ffprobe": "available",
+        "ffprobe_version": "ffprobe version 8.0.1 Copyright (c) 2007-2025 the FFmpeg developers",
+        "openai_api_key": "configured"
+      },
+      "performance_metrics": {
+        "api_key_length": 164
+      }
+    },
+    {
+      "test_name": "Test Data Validation",
+      "category": "Data",
+      "status": "passed",
+      "duration_ms": 3,
+      "message": "Test data validation completed",
+      "details": {
+        "test_footage_dir": "available",
+        "video_file_count": 0,
+        "total_footage_size_gb": 0.0,
+        "project_manifest.json": "missing",
+        "project_diarization": "missing",
+        "project_scene_analysis": "missing",
+        "project_color_grading": "missing"
+      },
+      "performance_metrics": {
+        "footage_size_bytes": 0
+      }
+    },
+    {
+      "test_name": "DaVinci Integration Test",
+      "category": "Integration",
+      "status": "failed",
+      "duration_ms": 0,
+      "message": "DaVinci integration failed: No module named 'DaVinciResolveScript'",
+      "details": {
+        "error": "No module named 'DaVinciResolveScript'"
+      },
+      "performance_metrics": {}
+    },
+    {
+      "test_name": "Pipeline Components Check",
+      "category": "Pipeline",
+      "status": "passed",
+      "duration_ms": 8,
+      "message": "All 11 pipeline components validated",
+      "details": {
+        "ingest_file": "exists",
+        "ingest_executable": "no",
+        "ingest_syntax": "valid",
+        "ingest_size_kb": 5.1,
+        "transcribe_file": "exists",
+        "transcribe_executable": "no",
+        "transcribe_syntax": "valid",
+        "transcribe_size_kb": 6.35,
+        "script_engine_file": "exists",
+        "script_engine_executable": "no",
+        "script_engine_syntax": "valid",
+        "script_engine_size_kb": 12.4,
+        "timeline_builder_file": "exists",
+        "timeline_builder_executable": "no",
+        "timeline_builder_syntax": "valid",
+        "timeline_builder_size_kb": 7.02,
+        "color_grading_file": "exists",
+        "color_grading_executable": "no",
+        "color_grading_syntax": "valid",
+        "color_grading_size_kb": 17.89,
+        "social_clipper_file": "exists",
+        "social_clipper_executable": "no",
+        "social_clipper_syntax": "valid",
+        "social_clipper_size_kb": 13.56,
+        "automated_export_file": "exists",
+        "automated_export_executable": "yes",
+        "automated_export_syntax": "valid",
+        "automated_export_size_kb": 12.29,
+        "streamlined_workflow_file": "exists",
+        "streamlined_workflow_executable": "no",
+        "streamlined_workflow_syntax": "valid",
+        "streamlined_workflow_size_kb": 12.56,
+        "enhanced_render_file": "exists",
+        "enhanced_render_executable": "no",
+        "enhanced_render_syntax": "valid",
+        "enhanced_render_size_kb": 14.25,
+        "dashboard_data_file": "exists",
+        "dashboard_data_executable": "no",
+        "dashboard_data_syntax": "valid",
+        "dashboard_data_size_kb": 8.4,
+        "health_check_file": "exists",
+        "health_check_executable": "yes",
+        "health_check_syntax": "valid",
+        "health_check_size_kb": 9.61
+      },
+      "performance_metrics": {
+        "ingest_compile_ms": 1.3439655303955078,
+        "ingest_size_bytes": 5225,
+        "transcribe_compile_ms": 0.7169246673583984,
+        "transcribe_size_bytes": 6502,
+        "script_engine_compile_ms": 0.8668899536132812,
+        "script_engine_size_bytes": 12698,
+        "timeline_builder_compile_ms": 0.49591064453125,
+        "timeline_builder_size_bytes": 7192,
+        "color_grading_compile_ms": 1.09100341796875,
+        "color_grading_size_bytes": 18316,
+        "social_clipper_compile_ms": 0.7441043853759766,
+        "social_clipper_size_bytes": 13882,
+        "automated_export_compile_ms": 0.6570816040039062,
+        "automated_export_size_bytes": 12583,
+        "streamlined_workflow_compile_ms": 0.5350112915039062,
+        "streamlined_workflow_size_bytes": 12864,
+        "enhanced_render_compile_ms": 0.7789134979248047,
+        "enhanced_render_size_bytes": 14588,
+        "dashboard_data_compile_ms": 0.5209445953369141,
+        "dashboard_data_size_bytes": 8603,
+        "health_check_compile_ms": 0.5612373352050781,
+        "health_check_size_bytes": 9843
+      }
+    },
+    {
+      "test_name": "Output Quality Validation",
+      "category": "Quality",
+      "status": "passed",
+      "duration_ms": 223,
+      "message": "Quality validation completed for 6 videos",
+      "details": {
+        "video_file_count": 6,
+        "total_render_size_mb": 461.1,
+        "quality_analysis": {
+          "portalcam-30s-summary-v2.mp4": {
+            "resolution": "1920x1080",
+            "fps": 24.0,
+            "duration": 34.624,
+            "bitrate": 11626131,
+            "codec": "h264"
+          },
+          "portalcam-30s-v3.mp4": {
+            "resolution": "1920x1080",
+            "fps": 24.0,
+            "duration": 27.733333,
+            "bitrate": 11698097,
+            "codec": "h264"
+          },
+          "portalcam-5min-interview.mp4": {
+            "resolution": "1920x1080",
+            "fps": 24.0,
+            "duration": 249.109333,
+            "bitrate": 11619206,
+            "codec": "h264"
+          },
+          "portalcam-30s-summary.mp4": {
+            "resolution": "1920x1080",
+            "fps": 24.0,
+            "duration": 11.861333,
+            "bitrate": 11618813,
+            "codec": "h264"
+          },
+          "portalcam-30s-discord.mp4": {
+            "resolution": "1920x1080",
+            "fps": 24.0,
+            "duration": 34.58,
+            "bitrate": 1606938,
+            "codec": "h264"
+          },
+          "portalcam-30s-v3-discord.mp4": {
+            "resolution": "1920x1080",
+            "fps": 24.0,
+            "duration": 27.689,
+            "bitrate": 1920734,
+            "codec": "h264"
+          }
+        }
+      },
+      "performance_metrics": {
+        "total_render_size_bytes": 483498602,
+        "average_file_size_mb": 76.85,
+        "hd_video_count": 6,
+        "uhd_video_count": 0,
+        "quality_score": 1.0
+      }
+    },
+    {
+      "test_name": "Social Workflow Test",
+      "category": "Workflow",
+      "status": "passed",
+      "duration_ms": 26,
+      "message": "Social workflow validation successful",
+      "details": {
+        "workflow_generation": "successful",
+        "latest_workflow_dir": "streamlined_workflow/20260215_033111",
+        "generated_precision_manual_guide.json": "exists",
+        "generated_client_demo_script.md": "exists",
+        "generated_optimal_social_clips.json": "exists"
+      },
+      "performance_metrics": {
+        "workflow_generation_ms": 25.614261627197266,
+        "precision_manual_guide.json_size_bytes": 8311,
+        "client_demo_script.md_size_bytes": 4116,
+        "optimal_social_clips.json_size_bytes": 2602
+      }
+    }
+  ],
+  "performance_summary": {
+    "test_execution": {
+      "total_tests": 7,
+      "total_duration_ms": 498,
+      "average_test_duration_ms": 71,
+      "slowest_test": "Environment Validation (225ms)",
+      "fastest_test": "DaVinci Integration Test (0ms)"
+    },
+    "system_performance": {
+      "api_key_length": 164,
+      "footage_size_bytes": 0,
+      "ingest_compile_ms": 1.3439655303955078,
+      "ingest_size_bytes": 5225,
+      "transcribe_compile_ms": 0.7169246673583984,
+      "transcribe_size_bytes": 6502,
+      "script_engine_compile_ms": 0.8668899536132812,
+      "script_engine_size_bytes": 12698,
+      "timeline_builder_compile_ms": 0.49591064453125,
+      "timeline_builder_size_bytes": 7192,
+      "color_grading_compile_ms": 1.09100341796875,
+      "color_grading_size_bytes": 18316,
+      "social_clipper_compile_ms": 0.7441043853759766,
+      "social_clipper_size_bytes": 13882,
+      "automated_export_compile_ms": 0.6570816040039062,
+      "automated_export_size_bytes": 12583,
+      "streamlined_workflow_compile_ms": 0.5350112915039062,
+      "streamlined_workflow_size_bytes": 12864,
+      "enhanced_render_compile_ms": 0.7789134979248047,
+      "enhanced_render_size_bytes": 14588,
+      "dashboard_data_compile_ms": 0.5209445953369141,
+      "dashboard_data_size_bytes": 8603,
+      "health_check_compile_ms": 0.5612373352050781,
+      "health_check_size_bytes": 9843,
+      "total_render_size_bytes": 483498602,
+      "average_file_size_mb": 76.85,
+      "hd_video_count": 6,
+      "uhd_video_count": 0,
+      "quality_score": 1.0,
+      "workflow_generation_ms": 25.614261627197266,
+      "precision_manual_guide.json_size_bytes": 8311,
+      "client_demo_script.md_size_bytes": 4116,
+      "optimal_social_clips.json_size_bytes": 2602
+    },
+    "quality_metrics": {},
+    "resource_usage": {}
+  },
+  "recommendations": [
+    "Address 1 failed tests before production deployment",
+    "Consider increasing output quality settings for better results"
+  ]
+}

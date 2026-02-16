@@ -1,0 +1,276 @@
+2026-02-15 07:32:10,960 - INFO - 🚀 Starting Comprehensive Test Suite
+2026-02-15 07:32:10,960 - INFO - 📁 Project root: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw
+2026-02-15 07:32:10,960 - INFO - 🧪 Running test: Python Environment
+2026-02-15 07:32:11,336 - INFO - ✅ PASSED: Python Environment (0.38s)
+2026-02-15 07:32:11,336 - INFO - 🧪 Running test: External Dependencies
+2026-02-15 07:32:11,362 - INFO - ✅ PASSED: External Dependencies (0.03s)
+2026-02-15 07:32:11,362 - INFO - 🧪 Running test: File Structure
+2026-02-15 07:32:11,362 - INFO - ✅ PASSED: File Structure (0.00s)
+2026-02-15 07:32:11,362 - INFO - 🧪 Running test: Data Integrity
+2026-02-15 07:32:11,362 - INFO - ✅ PASSED: Data Integrity (0.00s)
+2026-02-15 07:32:11,362 - INFO - 🧪 Running test: DaVinci Resolve Connection
+2026-02-15 07:32:11,373 - INFO - ✅ PASSED: DaVinci Resolve Connection (0.01s)
+2026-02-15 07:32:11,373 - INFO - 🧪 Running test: Render Outputs
+2026-02-15 07:32:11,373 - INFO - ✅ PASSED: Render Outputs (0.00s)
+2026-02-15 07:32:11,373 - INFO - 🧪 Running test: Social Media Exports
+2026-02-15 07:32:11,373 - INFO - ✅ PASSED: Social Media Exports (0.00s)
+2026-02-15 07:32:11,373 - INFO - 🧪 Running test: Docker Configuration
+2026-02-15 07:32:11,374 - INFO - ✅ PASSED: Docker Configuration (0.00s)
+2026-02-15 07:32:11,374 - INFO - 🧪 Running test: API Endpoints
+2026-02-15 07:32:11,374 - INFO - ✅ PASSED: API Endpoints (0.00s)
+2026-02-15 07:32:11,374 - INFO - 🧪 Running test: Performance Monitoring
+2026-02-15 07:32:11,375 - INFO - ✅ PASSED: Performance Monitoring (0.00s)
+2026-02-15 07:32:11,375 - INFO - 
+============================================================
+2026-02-15 07:32:11,375 - INFO - 📊 COMPREHENSIVE TEST SUITE RESULTS
+2026-02-15 07:32:11,375 - INFO - ============================================================
+2026-02-15 07:32:11,375 - INFO - 🎯 Total Tests: 10
+2026-02-15 07:32:11,375 - INFO - ✅ Passed: 10
+2026-02-15 07:32:11,375 - INFO - ❌ Failed: 0
+2026-02-15 07:32:11,375 - INFO - ⏱️  Duration: 0.41 seconds
+2026-02-15 07:32:11,375 - INFO - 📈 Success Rate: 100.0%
+2026-02-15 07:32:11,375 - INFO - 
+📋 DETAILED RESULTS:
+2026-02-15 07:32:11,375 - INFO - ✅ Python Environment: PASSED (0.38s)
+2026-02-15 07:32:11,375 - INFO - ✅ External Dependencies: PASSED (0.03s)
+2026-02-15 07:32:11,375 - INFO - ✅ File Structure: PASSED (0.00s)
+2026-02-15 07:32:11,375 - INFO - ✅ Data Integrity: PASSED (0.00s)
+2026-02-15 07:32:11,375 - INFO - ✅ DaVinci Resolve Connection: PASSED (0.01s)
+2026-02-15 07:32:11,375 - INFO - ✅ Render Outputs: PASSED (0.00s)
+2026-02-15 07:32:11,375 - INFO - ✅ Social Media Exports: PASSED (0.00s)
+2026-02-15 07:32:11,375 - INFO - ✅ Docker Configuration: PASSED (0.00s)
+2026-02-15 07:32:11,375 - INFO - ✅ API Endpoints: PASSED (0.00s)
+2026-02-15 07:32:11,375 - INFO - ✅ Performance Monitoring: PASSED (0.00s)
+2026-02-15 07:32:11,375 - INFO - 
+💾 Results saved to: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw/test_results.json
+2026-02-15 07:32:11,375 - INFO - ============================================================
+2026-02-15 07:59:17,525 - INFO - 🚀 Starting Comprehensive Test Suite
+2026-02-15 07:59:17,525 - INFO - 📁 Project root: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw
+2026-02-15 07:59:17,525 - INFO - 🧪 Running test: Python Environment
+2026-02-15 07:59:17,747 - INFO - ✅ PASSED: Python Environment (0.22s)
+2026-02-15 07:59:17,747 - INFO - 🧪 Running test: External Dependencies
+2026-02-15 07:59:17,760 - INFO - ✅ PASSED: External Dependencies (0.01s)
+2026-02-15 07:59:17,760 - INFO - 🧪 Running test: File Structure
+2026-02-15 07:59:17,760 - INFO - ✅ PASSED: File Structure (0.00s)
+2026-02-15 07:59:17,760 - INFO - 🧪 Running test: Data Integrity
+2026-02-15 07:59:17,760 - INFO - ✅ PASSED: Data Integrity (0.00s)
+2026-02-15 07:59:17,760 - INFO - 🧪 Running test: DaVinci Resolve Connection
+2026-02-15 07:59:17,771 - INFO - ✅ PASSED: DaVinci Resolve Connection (0.01s)
+2026-02-15 07:59:17,771 - INFO - 🧪 Running test: Render Outputs
+2026-02-15 07:59:17,771 - INFO - ✅ PASSED: Render Outputs (0.00s)
+2026-02-15 07:59:17,771 - INFO - 🧪 Running test: Social Media Exports
+2026-02-15 07:59:17,771 - INFO - ✅ PASSED: Social Media Exports (0.00s)
+2026-02-15 07:59:17,771 - INFO - 🧪 Running test: Docker Configuration
+2026-02-15 07:59:17,772 - INFO - ✅ PASSED: Docker Configuration (0.00s)
+2026-02-15 07:59:17,772 - INFO - 🧪 Running test: API Endpoints
+2026-02-15 07:59:17,772 - INFO - ✅ PASSED: API Endpoints (0.00s)
+2026-02-15 07:59:17,772 - INFO - 🧪 Running test: Performance Monitoring
+2026-02-15 07:59:17,772 - INFO - ✅ PASSED: Performance Monitoring (0.00s)
+2026-02-15 07:59:17,772 - INFO - 
+============================================================
+2026-02-15 07:59:17,772 - INFO - 📊 COMPREHENSIVE TEST SUITE RESULTS
+2026-02-15 07:59:17,772 - INFO - ============================================================
+2026-02-15 07:59:17,772 - INFO - 🎯 Total Tests: 10
+2026-02-15 07:59:17,772 - INFO - ✅ Passed: 10
+2026-02-15 07:59:17,772 - INFO - ❌ Failed: 0
+2026-02-15 07:59:17,772 - INFO - ⏱️  Duration: 0.25 seconds
+2026-02-15 07:59:17,772 - INFO - 📈 Success Rate: 100.0%
+2026-02-15 07:59:17,772 - INFO - 
+📋 DETAILED RESULTS:
+2026-02-15 07:59:17,772 - INFO - ✅ Python Environment: PASSED (0.22s)
+2026-02-15 07:59:17,772 - INFO - ✅ External Dependencies: PASSED (0.01s)
+2026-02-15 07:59:17,772 - INFO - ✅ File Structure: PASSED (0.00s)
+2026-02-15 07:59:17,772 - INFO - ✅ Data Integrity: PASSED (0.00s)
+2026-02-15 07:59:17,772 - INFO - ✅ DaVinci Resolve Connection: PASSED (0.01s)
+2026-02-15 07:59:17,772 - INFO - ✅ Render Outputs: PASSED (0.00s)
+2026-02-15 07:59:17,772 - INFO - ✅ Social Media Exports: PASSED (0.00s)
+2026-02-15 07:59:17,772 - INFO - ✅ Docker Configuration: PASSED (0.00s)
+2026-02-15 07:59:17,772 - INFO - ✅ API Endpoints: PASSED (0.00s)
+2026-02-15 07:59:17,772 - INFO - ✅ Performance Monitoring: PASSED (0.00s)
+2026-02-15 07:59:17,772 - INFO - 
+💾 Results saved to: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw/test_results.json
+2026-02-15 07:59:17,772 - INFO - ============================================================
+2026-02-15 08:29:34,232 - INFO - 🚀 Starting Comprehensive Test Suite
+2026-02-15 08:29:34,233 - INFO - 📁 Project root: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw
+2026-02-15 08:29:34,233 - INFO - 🧪 Running test: Python Environment
+2026-02-15 08:29:34,456 - INFO - ✅ PASSED: Python Environment (0.22s)
+2026-02-15 08:29:34,456 - INFO - 🧪 Running test: External Dependencies
+2026-02-15 08:29:34,469 - INFO - ✅ PASSED: External Dependencies (0.01s)
+2026-02-15 08:29:34,469 - INFO - 🧪 Running test: File Structure
+2026-02-15 08:29:34,469 - INFO - ✅ PASSED: File Structure (0.00s)
+2026-02-15 08:29:34,469 - INFO - 🧪 Running test: Data Integrity
+2026-02-15 08:29:34,469 - INFO - ✅ PASSED: Data Integrity (0.00s)
+2026-02-15 08:29:34,469 - INFO - 🧪 Running test: DaVinci Resolve Connection
+2026-02-15 08:29:34,480 - INFO - ✅ PASSED: DaVinci Resolve Connection (0.01s)
+2026-02-15 08:29:34,480 - INFO - 🧪 Running test: Render Outputs
+2026-02-15 08:29:34,480 - INFO - ✅ PASSED: Render Outputs (0.00s)
+2026-02-15 08:29:34,480 - INFO - 🧪 Running test: Social Media Exports
+2026-02-15 08:29:34,480 - INFO - ✅ PASSED: Social Media Exports (0.00s)
+2026-02-15 08:29:34,480 - INFO - 🧪 Running test: Docker Configuration
+2026-02-15 08:29:34,480 - INFO - ✅ PASSED: Docker Configuration (0.00s)
+2026-02-15 08:29:34,480 - INFO - 🧪 Running test: API Endpoints
+2026-02-15 08:29:34,480 - INFO - ✅ PASSED: API Endpoints (0.00s)
+2026-02-15 08:29:34,480 - INFO - 🧪 Running test: Performance Monitoring
+2026-02-15 08:29:34,480 - INFO - ✅ PASSED: Performance Monitoring (0.00s)
+2026-02-15 08:29:34,480 - INFO - 
+============================================================
+2026-02-15 08:29:34,480 - INFO - 📊 COMPREHENSIVE TEST SUITE RESULTS
+2026-02-15 08:29:34,480 - INFO - ============================================================
+2026-02-15 08:29:34,480 - INFO - 🎯 Total Tests: 10
+2026-02-15 08:29:34,481 - INFO - ✅ Passed: 10
+2026-02-15 08:29:34,481 - INFO - ❌ Failed: 0
+2026-02-15 08:29:34,481 - INFO - ⏱️  Duration: 0.25 seconds
+2026-02-15 08:29:34,481 - INFO - 📈 Success Rate: 100.0%
+2026-02-15 08:29:34,481 - INFO - 
+📋 DETAILED RESULTS:
+2026-02-15 08:29:34,481 - INFO - ✅ Python Environment: PASSED (0.22s)
+2026-02-15 08:29:34,481 - INFO - ✅ External Dependencies: PASSED (0.01s)
+2026-02-15 08:29:34,481 - INFO - ✅ File Structure: PASSED (0.00s)
+2026-02-15 08:29:34,481 - INFO - ✅ Data Integrity: PASSED (0.00s)
+2026-02-15 08:29:34,481 - INFO - ✅ DaVinci Resolve Connection: PASSED (0.01s)
+2026-02-15 08:29:34,481 - INFO - ✅ Render Outputs: PASSED (0.00s)
+2026-02-15 08:29:34,481 - INFO - ✅ Social Media Exports: PASSED (0.00s)
+2026-02-15 08:29:34,481 - INFO - ✅ Docker Configuration: PASSED (0.00s)
+2026-02-15 08:29:34,481 - INFO - ✅ API Endpoints: PASSED (0.00s)
+2026-02-15 08:29:34,481 - INFO - ✅ Performance Monitoring: PASSED (0.00s)
+2026-02-15 08:29:34,481 - INFO - 
+💾 Results saved to: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw/test_results.json
+2026-02-15 08:29:34,481 - INFO - ============================================================
+2026-02-15 08:59:26,013 - INFO - 🚀 Starting Comprehensive Test Suite
+2026-02-15 08:59:26,013 - INFO - 📁 Project root: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw
+2026-02-15 08:59:26,013 - INFO - 🧪 Running test: Python Environment
+2026-02-15 08:59:26,230 - INFO - ✅ PASSED: Python Environment (0.22s)
+2026-02-15 08:59:26,230 - INFO - 🧪 Running test: External Dependencies
+2026-02-15 08:59:26,243 - INFO - ✅ PASSED: External Dependencies (0.01s)
+2026-02-15 08:59:26,243 - INFO - 🧪 Running test: File Structure
+2026-02-15 08:59:26,244 - INFO - ✅ PASSED: File Structure (0.00s)
+2026-02-15 08:59:26,244 - INFO - 🧪 Running test: Data Integrity
+2026-02-15 08:59:26,244 - INFO - ✅ PASSED: Data Integrity (0.00s)
+2026-02-15 08:59:26,244 - INFO - 🧪 Running test: DaVinci Resolve Connection
+2026-02-15 08:59:26,254 - INFO - ✅ PASSED: DaVinci Resolve Connection (0.01s)
+2026-02-15 08:59:26,254 - INFO - 🧪 Running test: Render Outputs
+2026-02-15 08:59:26,255 - INFO - ✅ PASSED: Render Outputs (0.00s)
+2026-02-15 08:59:26,255 - INFO - 🧪 Running test: Social Media Exports
+2026-02-15 08:59:26,255 - INFO - ✅ PASSED: Social Media Exports (0.00s)
+2026-02-15 08:59:26,255 - INFO - 🧪 Running test: Docker Configuration
+2026-02-15 08:59:26,255 - INFO - ✅ PASSED: Docker Configuration (0.00s)
+2026-02-15 08:59:26,255 - INFO - 🧪 Running test: API Endpoints
+2026-02-15 08:59:26,255 - INFO - ✅ PASSED: API Endpoints (0.00s)
+2026-02-15 08:59:26,255 - INFO - 🧪 Running test: Performance Monitoring
+2026-02-15 08:59:26,255 - INFO - ✅ PASSED: Performance Monitoring (0.00s)
+2026-02-15 08:59:26,255 - INFO - 
+============================================================
+2026-02-15 08:59:26,255 - INFO - 📊 COMPREHENSIVE TEST SUITE RESULTS
+2026-02-15 08:59:26,255 - INFO - ============================================================
+2026-02-15 08:59:26,255 - INFO - 🎯 Total Tests: 10
+2026-02-15 08:59:26,255 - INFO - ✅ Passed: 10
+2026-02-15 08:59:26,255 - INFO - ❌ Failed: 0
+2026-02-15 08:59:26,255 - INFO - ⏱️  Duration: 0.24 seconds
+2026-02-15 08:59:26,255 - INFO - 📈 Success Rate: 100.0%
+2026-02-15 08:59:26,255 - INFO - 
+📋 DETAILED RESULTS:
+2026-02-15 08:59:26,255 - INFO - ✅ Python Environment: PASSED (0.22s)
+2026-02-15 08:59:26,255 - INFO - ✅ External Dependencies: PASSED (0.01s)
+2026-02-15 08:59:26,255 - INFO - ✅ File Structure: PASSED (0.00s)
+2026-02-15 08:59:26,255 - INFO - ✅ Data Integrity: PASSED (0.00s)
+2026-02-15 08:59:26,255 - INFO - ✅ DaVinci Resolve Connection: PASSED (0.01s)
+2026-02-15 08:59:26,255 - INFO - ✅ Render Outputs: PASSED (0.00s)
+2026-02-15 08:59:26,255 - INFO - ✅ Social Media Exports: PASSED (0.00s)
+2026-02-15 08:59:26,255 - INFO - ✅ Docker Configuration: PASSED (0.00s)
+2026-02-15 08:59:26,255 - INFO - ✅ API Endpoints: PASSED (0.00s)
+2026-02-15 08:59:26,255 - INFO - ✅ Performance Monitoring: PASSED (0.00s)
+2026-02-15 08:59:26,256 - INFO - 
+💾 Results saved to: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw/test_results.json
+2026-02-15 08:59:26,256 - INFO - ============================================================
+2026-02-15 09:59:19,414 - INFO - 🚀 Starting Comprehensive Test Suite
+2026-02-15 09:59:19,414 - INFO - 📁 Project root: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw
+2026-02-15 09:59:19,414 - INFO - 🧪 Running test: Python Environment
+2026-02-15 09:59:19,663 - INFO - ✅ PASSED: Python Environment (0.25s)
+2026-02-15 09:59:19,663 - INFO - 🧪 Running test: External Dependencies
+2026-02-15 09:59:19,677 - INFO - ✅ PASSED: External Dependencies (0.01s)
+2026-02-15 09:59:19,677 - INFO - 🧪 Running test: File Structure
+2026-02-15 09:59:19,677 - INFO - ✅ PASSED: File Structure (0.00s)
+2026-02-15 09:59:19,677 - INFO - 🧪 Running test: Data Integrity
+2026-02-15 09:59:19,677 - INFO - ✅ PASSED: Data Integrity (0.00s)
+2026-02-15 09:59:19,677 - INFO - 🧪 Running test: DaVinci Resolve Connection
+2026-02-15 09:59:19,688 - INFO - ✅ PASSED: DaVinci Resolve Connection (0.01s)
+2026-02-15 09:59:19,688 - INFO - 🧪 Running test: Render Outputs
+2026-02-15 09:59:19,689 - INFO - ✅ PASSED: Render Outputs (0.00s)
+2026-02-15 09:59:19,689 - INFO - 🧪 Running test: Social Media Exports
+2026-02-15 09:59:19,689 - INFO - ✅ PASSED: Social Media Exports (0.00s)
+2026-02-15 09:59:19,689 - INFO - 🧪 Running test: Docker Configuration
+2026-02-15 09:59:19,689 - INFO - ✅ PASSED: Docker Configuration (0.00s)
+2026-02-15 09:59:19,689 - INFO - 🧪 Running test: API Endpoints
+2026-02-15 09:59:19,689 - INFO - ✅ PASSED: API Endpoints (0.00s)
+2026-02-15 09:59:19,689 - INFO - 🧪 Running test: Performance Monitoring
+2026-02-15 09:59:19,690 - INFO - ✅ PASSED: Performance Monitoring (0.00s)
+2026-02-15 09:59:19,690 - INFO - 
+============================================================
+2026-02-15 09:59:19,690 - INFO - 📊 COMPREHENSIVE TEST SUITE RESULTS
+2026-02-15 09:59:19,690 - INFO - ============================================================
+2026-02-15 09:59:19,690 - INFO - 🎯 Total Tests: 10
+2026-02-15 09:59:19,690 - INFO - ✅ Passed: 10
+2026-02-15 09:59:19,690 - INFO - ❌ Failed: 0
+2026-02-15 09:59:19,690 - INFO - ⏱️  Duration: 0.28 seconds
+2026-02-15 09:59:19,690 - INFO - 📈 Success Rate: 100.0%
+2026-02-15 09:59:19,690 - INFO - 
+📋 DETAILED RESULTS:
+2026-02-15 09:59:19,690 - INFO - ✅ Python Environment: PASSED (0.25s)
+2026-02-15 09:59:19,690 - INFO - ✅ External Dependencies: PASSED (0.01s)
+2026-02-15 09:59:19,690 - INFO - ✅ File Structure: PASSED (0.00s)
+2026-02-15 09:59:19,690 - INFO - ✅ Data Integrity: PASSED (0.00s)
+2026-02-15 09:59:19,690 - INFO - ✅ DaVinci Resolve Connection: PASSED (0.01s)
+2026-02-15 09:59:19,690 - INFO - ✅ Render Outputs: PASSED (0.00s)
+2026-02-15 09:59:19,690 - INFO - ✅ Social Media Exports: PASSED (0.00s)
+2026-02-15 09:59:19,690 - INFO - ✅ Docker Configuration: PASSED (0.00s)
+2026-02-15 09:59:19,690 - INFO - ✅ API Endpoints: PASSED (0.00s)
+2026-02-15 09:59:19,690 - INFO - ✅ Performance Monitoring: PASSED (0.00s)
+2026-02-15 09:59:19,690 - INFO - 
+💾 Results saved to: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw/test_results.json
+2026-02-15 09:59:19,690 - INFO - ============================================================
+2026-02-15 10:29:16,090 - INFO - 🚀 Starting Comprehensive Test Suite
+2026-02-15 10:29:16,090 - INFO - 📁 Project root: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw
+2026-02-15 10:29:16,090 - INFO - 🧪 Running test: Python Environment
+2026-02-15 10:29:16,307 - INFO - ✅ PASSED: Python Environment (0.22s)
+2026-02-15 10:29:16,307 - INFO - 🧪 Running test: External Dependencies
+2026-02-15 10:29:16,319 - INFO - ✅ PASSED: External Dependencies (0.01s)
+2026-02-15 10:29:16,319 - INFO - 🧪 Running test: File Structure
+2026-02-15 10:29:16,319 - INFO - ✅ PASSED: File Structure (0.00s)
+2026-02-15 10:29:16,319 - INFO - 🧪 Running test: Data Integrity
+2026-02-15 10:29:16,319 - INFO - ✅ PASSED: Data Integrity (0.00s)
+2026-02-15 10:29:16,319 - INFO - 🧪 Running test: DaVinci Resolve Connection
+2026-02-15 10:29:16,330 - INFO - ✅ PASSED: DaVinci Resolve Connection (0.01s)
+2026-02-15 10:29:16,330 - INFO - 🧪 Running test: Render Outputs
+2026-02-15 10:29:16,330 - INFO - ✅ PASSED: Render Outputs (0.00s)
+2026-02-15 10:29:16,330 - INFO - 🧪 Running test: Social Media Exports
+2026-02-15 10:29:16,330 - INFO - ✅ PASSED: Social Media Exports (0.00s)
+2026-02-15 10:29:16,330 - INFO - 🧪 Running test: Docker Configuration
+2026-02-15 10:29:16,330 - INFO - ✅ PASSED: Docker Configuration (0.00s)
+2026-02-15 10:29:16,330 - INFO - 🧪 Running test: API Endpoints
+2026-02-15 10:29:16,331 - INFO - ✅ PASSED: API Endpoints (0.00s)
+2026-02-15 10:29:16,331 - INFO - 🧪 Running test: Performance Monitoring
+2026-02-15 10:29:16,331 - INFO - ✅ PASSED: Performance Monitoring (0.00s)
+2026-02-15 10:29:16,331 - INFO - 
+============================================================
+2026-02-15 10:29:16,331 - INFO - 📊 COMPREHENSIVE TEST SUITE RESULTS
+2026-02-15 10:29:16,331 - INFO - ============================================================
+2026-02-15 10:29:16,331 - INFO - 🎯 Total Tests: 10
+2026-02-15 10:29:16,331 - INFO - ✅ Passed: 10
+2026-02-15 10:29:16,331 - INFO - ❌ Failed: 0
+2026-02-15 10:29:16,331 - INFO - ⏱️  Duration: 0.24 seconds
+2026-02-15 10:29:16,331 - INFO - 📈 Success Rate: 100.0%
+2026-02-15 10:29:16,331 - INFO - 
+📋 DETAILED RESULTS:
+2026-02-15 10:29:16,331 - INFO - ✅ Python Environment: PASSED (0.22s)
+2026-02-15 10:29:16,331 - INFO - ✅ External Dependencies: PASSED (0.01s)
+2026-02-15 10:29:16,331 - INFO - ✅ File Structure: PASSED (0.00s)
+2026-02-15 10:29:16,331 - INFO - ✅ Data Integrity: PASSED (0.00s)
+2026-02-15 10:29:16,331 - INFO - ✅ DaVinci Resolve Connection: PASSED (0.01s)
+2026-02-15 10:29:16,331 - INFO - ✅ Render Outputs: PASSED (0.00s)
+2026-02-15 10:29:16,331 - INFO - ✅ Social Media Exports: PASSED (0.00s)
+2026-02-15 10:29:16,331 - INFO - ✅ Docker Configuration: PASSED (0.00s)
+2026-02-15 10:29:16,331 - INFO - ✅ API Endpoints: PASSED (0.00s)
+2026-02-15 10:29:16,331 - INFO - ✅ Performance Monitoring: PASSED (0.00s)
+2026-02-15 10:29:16,331 - INFO - 
+💾 Results saved to: /Users/thelodgestudio/.openclaw/workspace/davinci-resolve-openclaw/test_results.json
+2026-02-15 10:29:16,331 - INFO - ============================================================

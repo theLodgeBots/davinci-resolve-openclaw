@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS transcripts (
     duration REAL,
     word_count INTEGER,
     raw_response JSON,
-    method TEXT DEFAULT 'whisper',
+    method TEXT DEFAULT 'resolve',
     transcribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

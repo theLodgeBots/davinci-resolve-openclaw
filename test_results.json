@@ -1,0 +1,63 @@
+{
+  "start_time": 1771169356.09011,
+  "tests": {
+    "Python Environment": {
+      "status": "PASSED",
+      "duration": 0.21682119369506836,
+      "timestamp": 1771169356.0902588
+    },
+    "External Dependencies": {
+      "status": "PASSED",
+      "duration": 0.012277841567993164,
+      "timestamp": 1771169356.3071702
+    },
+    "File Structure": {
+      "status": "PASSED",
+      "duration": 8.296966552734375e-05,
+      "timestamp": 1771169356.319594
+    },
+    "Data Integrity": {
+      "status": "PASSED",
+      "duration": 3.3855438232421875e-05,
+      "timestamp": 1771169356.31972
+    },
+    "DaVinci Resolve Connection": {
+      "status": "PASSED",
+      "duration": 0.010598182678222656,
+      "timestamp": 1771169356.319795
+    },
+    "Render Outputs": {
+      "status": "PASSED",
+      "duration": 0.00019288063049316406,
+      "timestamp": 1771169356.330522
+    },
+    "Social Media Exports": {
+      "status": "PASSED",
+      "duration": 2.3126602172851562e-05,
+      "timestamp": 1771169356.330764
+    },
+    "Docker Configuration": {
+      "status": "PASSED",
+      "duration": 8.726119995117188e-05,
+      "timestamp": 1771169356.3308249
+    },
+    "API Endpoints": {
+      "status": "PASSED",
+      "duration": 9.441375732421875e-05,
+      "timestamp": 1771169356.3309498
+    },
+    "Performance Monitoring": {
+      "status": "PASSED",
+      "duration": 0.0001289844512939453,
+      "timestamp": 1771169356.33108
+    }
+  },
+  "summary": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 0.2411179542541504
+  },
+  "end_time": 1771169356.33123
+}

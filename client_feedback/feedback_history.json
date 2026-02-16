@@ -1,0 +1,56 @@
+[
+  {
+    "client_id": "demo_client_001",
+    "project_name": "demo_project",
+    "preference_type": "overall",
+    "rating": 4,
+    "feedback_text": "Great work overall, but could use some improvements in pacing",
+    "timestamp": "2026-02-15T05:00:33.136812",
+    "content_type": "interview"
+  },
+  {
+    "client_id": "demo_client_001",
+    "project_name": "demo_project",
+    "preference_type": "style",
+    "rating": 5,
+    "feedback_text": "Perfect cinematic style, exactly what we wanted",
+    "timestamp": "2026-02-15T05:00:33.136812",
+    "content_type": "interview"
+  },
+  {
+    "client_id": "demo_client_001",
+    "project_name": "demo_project",
+    "preference_type": "pacing",
+    "rating": 3,
+    "feedback_text": "A bit too fast, would prefer slower transitions",
+    "timestamp": "2026-02-15T05:00:33.136812",
+    "content_type": "interview"
+  },
+  {
+    "client_id": "demo_client_001",
+    "project_name": "demo_project",
+    "preference_type": "color",
+    "rating": 4,
+    "feedback_text": "Love the warm color grading, very professional",
+    "timestamp": "2026-02-15T05:00:33.136812",
+    "content_type": "interview"
+  },
+  {
+    "client_id": "demo_client_001",
+    "project_name": "demo_project",
+    "preference_type": "music",
+    "rating": 5,
+    "feedback_text": "Background music choice was perfect, not distracting",
+    "timestamp": "2026-02-15T05:00:33.136812",
+    "content_type": "interview"
+  },
+  {
+    "client_id": "demo_client_001",
+    "project_name": "demo_project",
+    "preference_type": "length",
+    "rating": 4,
+    "feedback_text": "Good length for social media",
+    "timestamp": "2026-02-15T05:00:33.136812",
+    "content_type": "interview"
+  }
+]
