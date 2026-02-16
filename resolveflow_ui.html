@@ -9,76 +9,82 @@
 :root {
   --bg: #1a1a2e; --bg2: #16213e; --bg3: #0f3460; --surface: #1e2746;
   --text: #e0e0e0; --text2: #a0a0b0; --accent: #e94560; --accent2: #533483;
-  --green: #4ecca3; --border: #2a2a4a; --hover: #252545;
+  --green: #4ecca3; --yellow: #e9a645; --border: #2a2a4a; --hover: #252545;
 }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 button { cursor: pointer; border: none; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 500; transition: all .15s; }
 button:hover { filter: brightness(1.15); }
+button:disabled { opacity: .5; cursor: not-allowed; }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-secondary { background: var(--bg3); color: var(--text); }
 .btn-green { background: var(--green); color: #111; }
+.btn-yellow { background: var(--yellow); color: #111; }
 .btn-small { padding: 4px 10px; font-size: 12px; }
 input, select, textarea { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; }
 input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-/* Header */
-#header { display: flex; align-items: center; gap: 16px; padding: 10px 20px; background: var(--bg2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+#header { display: flex; align-items: center; gap: 16px; padding: 10px 20px; background: var(--bg2); border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
 #header h1 { font-size: 18px; color: var(--accent); font-weight: 700; }
 #header .stats { color: var(--text2); font-size: 13px; }
-#header .actions { margin-left: auto; display: flex; gap: 8px; }
+#header .actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+#resolve-status { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+#resolve-dot { width: 8px; height: 8px; border-radius: 50%; background: #666; display: inline-block; }
+#transcribe-progress { font-size: 11px; color: var(--yellow); display: none; }
 
-/* Main layout */
 #main { display: flex; flex: 1; overflow: hidden; }
 .panel { display: flex; flex-direction: column; border-right: 1px solid var(--border); overflow: hidden; }
 .panel-header { padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .panel-body { flex: 1; overflow-y: auto; padding: 10px; }
-
 #left-panel { width: 280px; min-width: 220px; }
 #center-panel { flex: 1; }
 #right-panel { width: 340px; min-width: 280px; border-right: none; }
 
-/* Clip browser */
+/* Clips */
 .clip-search { width: 100%; margin-bottom: 8px; }
 .clip-item { display: flex; gap: 8px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; align-items: center; }
 .clip-item:hover, .clip-item.active { background: var(--hover); }
 .clip-thumb { width: 64px; height: 36px; border-radius: 4px; background: var(--bg3); object-fit: cover; flex-shrink: 0; }
 .clip-info { flex: 1; min-width: 0; }
 .clip-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.clip-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
-.clip-badge { font-size: 10px; background: var(--accent2); color: #fff; padding: 1px 6px; border-radius: 10px; }
+.clip-meta { font-size: 11px; color: var(--text2); margin-top: 2px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.badge { font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+.badge-green { background: var(--green); color: #111; }
+.badge-yellow { background: var(--yellow); color: #111; }
+.badge-grey { background: #555; color: #ccc; }
 
 /* Transcript */
 .transcript-toggle { display: flex; gap: 6px; }
-.transcript-toggle button { font-size: 12px; }
 .transcript-toggle button.active { background: var(--accent); color: #fff; }
 .transcript-search { width: 100%; margin: 8px 0; }
-.segment-line { padding: 6px 8px; border-radius: 4px; cursor: pointer; display: flex; gap: 10px; margin-bottom: 2px; font-size: 13px; line-height: 1.5; }
+.clip-header { font-size: 13px; font-weight: 600; color: var(--accent); padding: 8px 8px 4px; border-top: 1px solid var(--border); margin-top: 8px; }
+.clip-header:first-child { margin-top: 0; border-top: none; }
+.segment-line { padding: 6px 8px; border-radius: 4px; cursor: pointer; display: flex; gap: 10px; margin-bottom: 2px; font-size: 13px; line-height: 1.5; align-items: flex-start; }
 .segment-line:hover { background: var(--hover); }
 .segment-line.highlighted { background: rgba(233,69,96,.15); }
-.segment-tc { color: var(--green); font-size: 11px; font-family: monospace; white-space: nowrap; min-width: 50px; padding-top: 2px; }
+.segment-tc { color: var(--green); font-size: 11px; font-family: monospace; white-space: nowrap; min-width: 55px; padding-top: 2px; }
 .segment-text { flex: 1; }
-.segment-speaker { color: var(--accent); font-size: 11px; font-weight: 600; }
+.segment-add { opacity: 0; transition: opacity .15s; flex-shrink: 0; }
+.segment-line:hover .segment-add { opacity: 1; }
 .no-transcript { color: var(--text2); text-align: center; padding: 40px 20px; font-size: 14px; }
 
-/* Script editor */
+/* Script */
 .script-selector { width: 100%; }
+.script-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
 .script-segment { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 8px; position: relative; }
 .script-segment:hover { border-color: var(--accent); }
-.seg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.seg-section { font-size: 13px; font-weight: 600; color: var(--green); background: none; border: none; padding: 0; }
-.seg-section:focus { outline: 1px solid var(--green); padding: 2px 4px; }
+.seg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 6px; }
+.seg-section { font-size: 13px; font-weight: 600; color: var(--green); background: none; border: none; padding: 0; flex: 1; min-width: 0; }
+.seg-section:focus { outline: 1px solid var(--green); padding: 2px 4px; border-radius: 3px; }
 .seg-clip { font-size: 11px; color: var(--text2); }
 .seg-timecode { font-size: 11px; color: var(--accent); font-family: monospace; }
 .seg-preview { font-size: 12px; color: var(--text2); margin-top: 4px; max-height: 40px; overflow: hidden; }
-.seg-actions { display: flex; gap: 6px; margin-top: 6px; }
-.seg-drag { cursor: grab; color: var(--text2); font-size: 16px; padding: 0 4px; }
-.script-total { text-align: center; padding: 10px; color: var(--text2); font-size: 13px; border-top: 1px solid var(--border); }
-.script-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg-actions { display: flex; gap: 4px; margin-top: 6px; }
+.script-total { text-align: center; padding: 10px; color: var(--text2); font-size: 13px; border-top: 1px solid var(--border); flex-shrink: 0; }
 
-/* Bottom timeline */
+/* Timeline */
 #timeline { height: 60px; background: var(--bg2); border-top: 1px solid var(--border); display: flex; align-items: center; padding: 8px 20px; gap: 4px; flex-shrink: 0; overflow-x: auto; }
-.tl-block { height: 36px; border-radius: 4px; min-width: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; cursor: pointer; transition: filter .15s; }
+.tl-block { height: 36px; border-radius: 4px; min-width: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; cursor: pointer; transition: filter .15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 4px; }
 .tl-block:hover { filter: brightness(1.3); }
 .tl-info { color: var(--text2); font-size: 11px; margin-left: auto; white-space: nowrap; }
 
@@ -86,9 +92,11 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 500px; max-width: 90vw; max-height: 80vh; overflow-y: auto; }
 .modal h3 { margin-bottom: 12px; }
-.modal textarea { width: 100%; height: 100px; margin-bottom: 12px; }
-.modal .result { background: var(--bg); border-radius: 8px; padding: 12px; margin-top: 12px; white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; }
+.modal label { display: block; font-size: 13px; margin-bottom: 4px; color: var(--text2); }
+.modal input, .modal select, .modal textarea { width: 100%; margin-bottom: 12px; }
+.modal textarea { height: 80px; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.modal .result { background: var(--bg); border-radius: 8px; padding: 12px; margin-top: 12px; white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -96,19 +104,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 <div id="header">
   <h1>⚡ ResolveFlow</h1>
   <span class="stats" id="project-stats">Loading...</span>
-  <span id="resolve-status" style="font-size:12px;display:flex;align-items:center;gap:4px;" title="DaVinci Resolve">
-    <span id="resolve-dot" style="width:8px;height:8px;border-radius:50%;background:#666;display:inline-block;"></span>
+  <span id="resolve-status" title="DaVinci Resolve">
+    <span id="resolve-dot"></span>
     <span id="resolve-label" style="color:var(--text2);">Resolve</span>
   </span>
+  <span id="transcribe-progress"></span>
   <div class="actions">
     <button class="btn-secondary" onclick="doIngest()">📥 Ingest</button>
-    <button class="btn-primary" onclick="doTranscribe()">🎙️ Transcribe via Resolve</button>
+    <button class="btn-primary" id="btn-transcribe" onclick="doTranscribe()">🎙️ Transcribe All</button>
     <button class="btn-green" onclick="newScript()">📝 New Script</button>
   </div>
 </div>
 
 <div id="main">
-  <!-- Left: Clip Browser -->
   <div class="panel" id="left-panel">
     <div class="panel-header">📁 Clips</div>
     <div class="panel-body">
@@ -117,13 +125,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     </div>
   </div>
 
-  <!-- Center: Transcript -->
   <div class="panel" id="center-panel">
     <div class="panel-header">
       📜 Transcript
       <div class="transcript-toggle">
         <button class="btn-small active" id="btn-single" onclick="setTranscriptMode('single')">Single Clip</button>
-        <button class="btn-small" id="btn-full" onclick="setTranscriptMode('full')">Full Combined</button>
+        <button class="btn-small" id="btn-full" onclick="setTranscriptMode('full')">All Clips</button>
       </div>
     </div>
     <div class="panel-body">
@@ -134,19 +141,19 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     </div>
   </div>
 
-  <!-- Right: Script Editor -->
   <div class="panel" id="right-panel">
     <div class="panel-header">
       🎬 Script
       <select class="script-selector" id="script-select" onchange="loadScript(this.value)" style="flex:1;margin-left:8px;">
-        <option value="">No scripts yet</option>
+        <option value="">Select script...</option>
       </select>
     </div>
     <div class="panel-body" id="script-body">
-      <div class="script-actions" style="margin-bottom:12px;">
+      <div class="script-actions">
         <button class="btn-secondary btn-small" onclick="showBrainstorm()">🧠 AI Brainstorm</button>
-        <button class="btn-secondary btn-small" onclick="doAutoEdit()">🤖 Auto-Edit</button>
-        <button class="btn-green btn-small" onclick="exportEDL()">📤 Export EDL</button>
+        <button class="btn-primary btn-small" onclick="showAIGenerate()">🤖 AI Generate</button>
+        <button class="btn-secondary btn-small" onclick="exportEDL()">📤 EDL</button>
+        <button class="btn-green btn-small" onclick="pushToResolve()">🎬 Push to Resolve</button>
       </div>
       <div id="script-segments"></div>
     </div>
@@ -164,15 +171,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 const API = '/api';
 let clips = [], currentClipId = null, transcriptMode = 'single';
 let scripts = [], currentScriptId = null, currentScript = null;
+let transcribePolling = null;
 const COLORS = ['#e94560','#533483','#4ecca3','#0f3460','#e9a645','#45e9a6','#a645e9','#6045e9'];
 
-// --- API helpers ---
 async function api(path, opts = {}) {
-  const r = await fetch(API + path, {
-    headers: {'Content-Type': 'application/json'},
-    ...opts,
-    body: opts.body ? JSON.stringify(opts.body) : undefined
-  });
+  const fetchOpts = { headers: {'Content-Type': 'application/json'}, ...opts };
+  if (opts.body && typeof opts.body === 'object') fetchOpts.body = JSON.stringify(opts.body);
+  const r = await fetch(API + path, fetchOpts);
   const ct = r.headers.get('content-type') || '';
   if (ct.includes('json')) return r.json();
   return r.text();
@@ -185,19 +190,17 @@ function fmtTime(s) {
 }
 
 function fmtTC(s) {
-  if (!s && s !== 0) return '00:00:00';
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toFixed(1).padStart(4,'0')}`;
+  if (!s && s !== 0) return '00:00.0';
+  const m = Math.floor(s / 60), sec = (s % 60);
+  return `${m.toString().padStart(2,'0')}:${sec.toFixed(1).padStart(4,'0')}`;
 }
 
-// --- Init ---
+// ─── Init ──────────────────────────────────────────────────────────
 async function init() {
   const proj = await api('/project');
   document.getElementById('project-stats').textContent = `${proj.name} — ${proj.clip_count} clips — ${fmtTime(proj.total_duration)}`;
   document.title = `ResolveFlow — ${proj.name}`;
-  await loadClips();
-  await loadScripts();
-  await checkResolveStatus();
+  await Promise.all([loadClips(), loadScripts(), checkResolveStatus()]);
 }
 
 async function checkResolveStatus() {
@@ -215,25 +218,29 @@ async function checkResolveStatus() {
       label.style.color = '#e94560';
     }
   } catch(e) {}
-  // Re-check every 30s
   setTimeout(checkResolveStatus, 30000);
 }
 
-// --- Clips ---
+// ─── Clips ─────────────────────────────────────────────────────────
 async function loadClips() {
   clips = await api('/clips');
   renderClips(clips);
 }
 
+function clipBadge(c) {
+  if (c.has_transcript) return '<span class="badge badge-green">✓ DB</span>';
+  if (c.resolve_transcription_status === 'Transcribed') return '<span class="badge badge-yellow">Resolve</span>';
+  return '<span class="badge badge-grey">—</span>';
+}
+
 function renderClips(list) {
-  const el = document.getElementById('clip-list');
-  el.innerHTML = list.map(c => `
+  document.getElementById('clip-list').innerHTML = list.map(c => `
     <div class="clip-item ${c.id === currentClipId ? 'active' : ''}" onclick="selectClip(${c.id})"
          draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${c.id}')">
       <img class="clip-thumb" src="/api/thumbnails/${c.id}" onerror="this.style.display='none'" loading="lazy">
       <div class="clip-info">
         <div class="clip-name" title="${c.filename}">${c.filename}</div>
-        <div class="clip-meta">${fmtTime(c.duration_seconds)} · ${c.resolution || '?'} ${c.camera ? '· <span class=clip-badge>'+c.camera+'</span>' : ''} ${c.resolve_transcription_status === 'Transcribed' ? '· <span style="color:var(--green);font-size:10px;">✓ Transcribed</span>' : ''}</div>
+        <div class="clip-meta">${fmtTime(c.duration_seconds)} · ${c.resolution||'?'} ${clipBadge(c)}</div>
       </div>
     </div>
   `).join('');
@@ -250,77 +257,94 @@ async function selectClip(id) {
   if (transcriptMode === 'single') await loadTranscript(id);
 }
 
-// --- Transcript ---
+// ─── Transcript ────────────────────────────────────────────────────
 function setTranscriptMode(mode) {
   transcriptMode = mode;
   document.getElementById('btn-single').classList.toggle('active', mode === 'single');
   document.getElementById('btn-full').classList.toggle('active', mode === 'full');
   if (mode === 'full') loadFullTranscript();
   else if (currentClipId) loadTranscript(currentClipId);
+  else document.getElementById('transcript-view').innerHTML = '<div class="no-transcript">Select a clip to view its transcript</div>';
 }
 
 async function loadTranscript(clipId) {
   const data = await api(`/transcript/${clipId}`);
   const el = document.getElementById('transcript-view');
   if (data.error) {
-    el.innerHTML = '<div class="no-transcript">No transcript yet. Click "Transcribe All" to generate.</div>';
+    const clip = clips.find(c => c.id === clipId);
+    const hasResolve = clip && clip.resolve_transcription_status === 'Transcribed';
+    el.innerHTML = `<div class="no-transcript">No transcript in database.${hasResolve ? '<br><br>This clip is transcribed in Resolve.<br>Click <b>Transcribe All</b> to pull it.' : '<br><br>Click <b>Transcribe All</b> to generate.'}</div>`;
     return;
   }
-  renderSegments(data.segments, el);
+  const clip = clips.find(c => c.id === clipId);
+  const header = clip ? `<div class="clip-header">📎 ${clip.filename}</div>` : '';
+  el.innerHTML = header + renderSegmentLines(data.segments, clipId);
 }
 
 async function loadFullTranscript() {
   const segs = await api('/transcript/full');
   const el = document.getElementById('transcript-view');
   if (!segs.length) {
-    el.innerHTML = '<div class="no-transcript">No transcripts yet.</div>';
+    el.innerHTML = '<div class="no-transcript">No transcripts yet. Click <b>Transcribe All</b> to generate.</div>';
     return;
   }
-  renderSegments(segs, el);
+  // Group by clip
+  let html = '';
+  let lastFname = '';
+  for (const s of segs) {
+    if (s.filename !== lastFname) {
+      lastFname = s.filename;
+      html += `<div class="clip-header">📎 ${s.filename}</div>`;
+    }
+    html += segmentLineHTML(s, s.clip_id);
+  }
+  el.innerHTML = html;
 }
 
-function renderSegments(segs, el) {
-  el.innerHTML = segs.map((s, i) => `
-    <div class="segment-line" data-idx="${i}" onclick="toggleSegHighlight(this)" data-clipid="${s.clip_id}" data-start="${s.start_time}" data-end="${s.end_time}">
-      <span class="segment-tc">${fmtTC(s.start_time)}</span>
-      ${s.speaker ? '<span class="segment-speaker">' + s.speaker + '</span>' : ''}
-      <span class="segment-text">${s.text}</span>
-      <button class="btn-small btn-secondary" onclick="event.stopPropagation();addSegToScript(${s.clip_id},${s.start_time},${s.end_time})" title="Add to script">+</button>
-    </div>
-  `).join('');
+function renderSegmentLines(segs, clipId) {
+  return segs.map(s => segmentLineHTML(s, clipId)).join('');
 }
 
-function toggleSegHighlight(el) {
-  el.classList.toggle('highlighted');
+function segmentLineHTML(s, clipId) {
+  const cid = s.clip_id || clipId;
+  return `<div class="segment-line" onclick="toggleSegHighlight(this)" data-clipid="${cid}" data-start="${s.start_time}" data-end="${s.end_time}">
+    <span class="segment-tc">[${fmtTC(s.start_time)}]</span>
+    <span class="segment-text">${s.text}</span>
+    <button class="btn-small btn-secondary segment-add" onclick="event.stopPropagation();addSegToScript(${cid},${s.start_time},${s.end_time})" title="Add to script">+ Script</button>
+  </div>`;
 }
+
+function toggleSegHighlight(el) { el.classList.toggle('highlighted'); }
 
 function searchTranscript(q) {
   q = q.toLowerCase();
   document.querySelectorAll('.segment-line').forEach(el => {
-    const text = el.querySelector('.segment-text').textContent.toLowerCase();
-    el.style.display = text.includes(q) || !q ? '' : 'none';
-    if (q && text.includes(q)) {
-      el.querySelector('.segment-text').innerHTML = el.querySelector('.segment-text').textContent.replace(
-        new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark style="background:var(--accent);color:#fff;border-radius:2px;padding:0 2px;">$1</mark>'
+    const textEl = el.querySelector('.segment-text');
+    const orig = textEl.textContent;
+    const matches = orig.toLowerCase().includes(q);
+    el.style.display = (matches || !q) ? '' : 'none';
+    if (q && matches) {
+      textEl.innerHTML = orig.replace(
+        new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+        '<mark style="background:var(--accent);color:#fff;border-radius:2px;padding:0 2px;">$1</mark>'
       );
+    } else {
+      textEl.textContent = orig;
     }
   });
 }
 
-// --- Scripts ---
+// ─── Scripts ───────────────────────────────────────────────────────
 async function loadScripts() {
   scripts = await api('/scripts');
   const sel = document.getElementById('script-select');
-  sel.innerHTML = '<option value="">Select a script...</option>' +
-    scripts.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  if (currentScriptId) {
-    sel.value = currentScriptId;
-    await loadScript(currentScriptId);
-  }
+  sel.innerHTML = '<option value="">Select script...</option>' +
+    scripts.map(s => `<option value="${s.id}">${s.name}${s.target_duration_seconds ? ' ('+fmtTime(s.target_duration_seconds)+')' : ''}</option>`).join('');
+  if (currentScriptId) { sel.value = currentScriptId; await loadScript(currentScriptId); }
 }
 
 async function loadScript(id) {
-  if (!id) { currentScriptId = null; currentScript = null; renderScript(); return; }
+  if (!id) { currentScriptId = null; currentScript = null; renderScript(); renderTimeline(); return; }
   currentScriptId = parseInt(id);
   currentScript = await api(`/script/${id}`);
   renderScript();
@@ -330,52 +354,40 @@ async function loadScript(id) {
 function renderScript() {
   const el = document.getElementById('script-segments');
   const total = document.getElementById('script-total');
-  if (!currentScript || !currentScript.segments) {
-    el.innerHTML = '<div class="no-transcript">No segments yet. Add from transcript or use AI Auto-Edit.</div>';
-    total.textContent = 'No script selected';
+  if (!currentScript || !currentScript.segments || !currentScript.segments.length) {
+    el.innerHTML = '<div class="no-transcript">No segments yet.<br>Add from transcript or use AI Generate.</div>';
+    total.textContent = currentScriptId ? '0 segments · 0:00' : 'No script selected';
     return;
   }
   const segs = currentScript.segments;
   let dur = segs.reduce((a, s) => a + (s.end_time - s.start_time), 0);
+  const targetDur = currentScript.script?.target_duration_seconds;
+
   el.innerHTML = segs.map((s, i) => `
-    <div class="script-segment" draggable="true" data-segid="${s.id}" data-idx="${i}">
+    <div class="script-segment" data-segid="${s.id}" data-idx="${i}">
       <div class="seg-header">
-        <input class="seg-section" value="${s.section_name || ''}" placeholder="Section..."
+        <input class="seg-section" value="${s.section_name || ''}" placeholder="Section name..."
                onchange="updateSeg(${s.id},{section_name:this.value})">
-        <button class="btn-small btn-primary" style="padding:2px 8px;font-size:11px;" onclick="deleteSeg(${s.id})">✕</button>
+        <div class="seg-actions">
+          ${i > 0 ? `<button class="btn-small btn-secondary" onclick="moveSeg(${s.id},${i-1})" title="Move up">↑</button>` : ''}
+          ${i < segs.length-1 ? `<button class="btn-small btn-secondary" onclick="moveSeg(${s.id},${i+1})" title="Move down">↓</button>` : ''}
+          <button class="btn-small btn-primary" style="padding:2px 8px;" onclick="deleteSeg(${s.id})">✕</button>
+        </div>
       </div>
-      <div class="seg-clip">${s.filename}</div>
+      <div class="seg-clip">📎 ${s.filename}</div>
       <div class="seg-timecode">${fmtTC(s.start_time)} → ${fmtTC(s.end_time)} (${fmtTime(s.end_time - s.start_time)})</div>
-      <div class="seg-preview">${s.notes || ''}</div>
+      ${s.notes ? `<div class="seg-preview">${s.notes}</div>` : ''}
     </div>
   `).join('');
-  total.textContent = `${segs.length} segments · ${fmtTime(dur)} total`;
 
-  // Drag reorder
-  el.querySelectorAll('.script-segment').forEach(seg => {
-    seg.addEventListener('dragstart', e => e.dataTransfer.setData('seg-id', seg.dataset.segid));
-    seg.addEventListener('dragover', e => { e.preventDefault(); seg.style.borderTop = '2px solid var(--accent)'; });
-    seg.addEventListener('dragleave', () => seg.style.borderTop = '');
-    seg.addEventListener('drop', async e => {
-      e.preventDefault(); seg.style.borderTop = '';
-      const dragId = e.dataTransfer.getData('seg-id');
-      if (!dragId) return;
-      const targetIdx = parseInt(seg.dataset.idx);
-      await api(`/script/${currentScriptId}/segment/${dragId}`, { method: 'PUT', body: { order_index: targetIdx }});
-      // Reindex all
-      const all = currentScript.segments;
-      for (let j = 0; j < all.length; j++) {
-        if (all[j].id != dragId) await api(`/script/${currentScriptId}/segment/${all[j].id}`, { method: 'PUT', body: { order_index: j >= targetIdx ? j + 1 : j }});
-      }
-      loadScript(currentScriptId);
-    });
-  });
+  let totalText = `${segs.length} segments · ${fmtTime(dur)}`;
+  if (targetDur) totalText += ` / ${fmtTime(targetDur)} target`;
+  total.textContent = totalText;
 }
 
 function renderTimeline() {
   const tl = document.getElementById('timeline');
-  const info = document.getElementById('tl-info');
-  if (!currentScript || !currentScript.segments.length) {
+  if (!currentScript || !currentScript.segments || !currentScript.segments.length) {
     tl.innerHTML = '<div class="tl-info">No segments</div>';
     return;
   }
@@ -384,103 +396,209 @@ function renderTimeline() {
   tl.innerHTML = segs.map((s, i) => {
     const pct = ((s.end_time - s.start_time) / totalDur * 100);
     const color = COLORS[i % COLORS.length];
-    return `<div class="tl-block" style="width:${Math.max(pct, 2)}%;background:${color}" title="${s.filename}: ${fmtTC(s.start_time)}→${fmtTC(s.end_time)}">${s.section_name || ''}</div>`;
+    return `<div class="tl-block" style="width:${Math.max(pct, 2)}%;background:${color}" title="${s.filename}: ${fmtTC(s.start_time)}→${fmtTC(s.end_time)}\n${s.section_name||''}">${s.section_name || s.filename}</div>`;
   }).join('') + `<div class="tl-info">${fmtTime(totalDur)}</div>`;
 }
 
 async function addSegToScript(clipId, start, end) {
-  if (!currentScriptId) { alert('Create or select a script first'); return; }
+  if (!currentScriptId) { alert('Create or select a script first.'); return; }
   await api(`/script/${currentScriptId}/segments`, { method: 'POST', body: { clip_id: clipId, start_time: start, end_time: end }});
-  loadScript(currentScriptId);
+  await loadScript(currentScriptId);
 }
 
 async function updateSeg(segId, data) {
   await api(`/script/${currentScriptId}/segment/${segId}`, { method: 'PUT', body: data });
 }
 
-async function deleteSeg(segId) {
-  await api(`/script/${currentScriptId}/segment/${segId}`, { method: 'DELETE' });
-  loadScript(currentScriptId);
+async function moveSeg(segId, newIdx) {
+  await api(`/script/${currentScriptId}/segment/${segId}`, { method: 'PUT', body: { order_index: newIdx }});
+  await loadScript(currentScriptId);
 }
 
-// --- Actions ---
+async function deleteSeg(segId) {
+  await api(`/script/${currentScriptId}/segment/${segId}`, { method: 'DELETE' });
+  await loadScript(currentScriptId);
+}
+
+// ─── Actions ───────────────────────────────────────────────────────
 async function doIngest() {
   const r = await api('/ingest', { method: 'POST' });
-  alert(`Ingested ${r.added} new clips (${r.total} total)`);
   await loadClips();
   const proj = await api('/project');
   document.getElementById('project-stats').textContent = `${proj.name} — ${proj.clip_count} clips — ${fmtTime(proj.total_duration)}`;
+  alert(`Ingested ${r.added} new clips (${r.total} total)`);
 }
 
 async function doTranscribe() {
-  const r = await api('/transcribe', { method: 'POST' });
-  alert(`Transcription started via DaVinci Resolve. Check console for progress.`);
+  const btn = document.getElementById('btn-transcribe');
+  btn.disabled = true;
+  btn.textContent = '⏳ Transcribing...';
+  const prog = document.getElementById('transcribe-progress');
+  prog.style.display = 'inline';
+  prog.textContent = 'Starting...';
+
+  await api('/transcribe', { method: 'POST' });
+
+  // Poll for progress
+  if (transcribePolling) clearInterval(transcribePolling);
+  transcribePolling = setInterval(async () => {
+    try {
+      const p = await api('/transcribe/progress');
+      if (p.running) {
+        prog.textContent = `${p.done}/${p.total}: ${p.current}`;
+      } else {
+        clearInterval(transcribePolling);
+        transcribePolling = null;
+        btn.disabled = false;
+        btn.textContent = '🎙️ Transcribe All';
+        prog.textContent = p.errors?.length ? `Done (${p.errors.length} errors)` : 'Done ✓';
+        setTimeout(() => { prog.style.display = 'none'; }, 5000);
+        await loadClips();
+        if (currentClipId && transcriptMode === 'single') await loadTranscript(currentClipId);
+        if (transcriptMode === 'full') await loadFullTranscript();
+      }
+    } catch(e) {}
+  }, 2000);
 }
 
 async function newScript() {
-  const name = prompt('Script name:');
-  if (!name) return;
-  const r = await api('/scripts', { method: 'POST', body: { name }});
-  currentScriptId = r.id;
-  await loadScripts();
+  showModal('New Script', `
+    <label>Name</label><input id="modal-name" value="New Script" autofocus>
+    <label>Target Duration (seconds)</label><input id="modal-dur" type="number" value="120" min="10">
+  `, async () => {
+    const name = document.getElementById('modal-name').value || 'Untitled';
+    const dur = parseInt(document.getElementById('modal-dur').value) || 120;
+    const r = await api('/scripts', { method: 'POST', body: { name, target_duration: dur }});
+    currentScriptId = r.id;
+    await loadScripts();
+    closeModal();
+  });
+}
+
+function showAIGenerate() {
+  if (!currentScriptId) {
+    showModal('AI Generate Script', `
+      <label>Script Name</label><input id="modal-name" value="AI Generated Script">
+      <label>Target Duration (seconds)</label><input id="modal-dur" type="number" value="120" min="10">
+      <label>Style</label>
+      <select id="modal-style">
+        <option value="highlight reel">Highlight Reel</option>
+        <option value="documentary">Documentary</option>
+        <option value="social media clip">Social Media Clip</option>
+        <option value="trailer">Trailer</option>
+        <option value="narrative">Narrative</option>
+      </select>
+    `, async () => {
+      const name = document.getElementById('modal-name').value;
+      const dur = parseInt(document.getElementById('modal-dur').value) || 120;
+      const style = document.getElementById('modal-style').value;
+      closeModal();
+      // Create script first, then generate
+      const r = await api('/scripts', { method: 'POST', body: { name, target_duration: dur }});
+      currentScriptId = r.id;
+      await loadScripts();
+      await doAIGenerate(dur, style);
+    });
+  } else {
+    showModal('AI Generate Segments', `
+      <label>Target Duration (seconds)</label><input id="modal-dur" type="number" value="${currentScript?.script?.target_duration_seconds || 120}" min="10">
+      <label>Style</label>
+      <select id="modal-style">
+        <option value="highlight reel">Highlight Reel</option>
+        <option value="documentary">Documentary</option>
+        <option value="social media clip">Social Media Clip</option>
+        <option value="trailer">Trailer</option>
+        <option value="narrative">Narrative</option>
+      </select>
+      <p style="font-size:12px;color:var(--text2);margin-top:4px;">This will add AI-generated segments to the current script.</p>
+    `, async () => {
+      const dur = parseInt(document.getElementById('modal-dur').value) || 120;
+      const style = document.getElementById('modal-style').value;
+      closeModal();
+      await doAIGenerate(dur, style);
+    });
+  }
+}
+
+async function doAIGenerate(targetDuration, style) {
+  const prog = document.getElementById('script-total');
+  prog.textContent = '🤖 AI generating edit plan...';
+
+  const r = await api('/ai/auto-edit', { method: 'POST', body: { target_duration: targetDuration, style }});
+
+  if (r.error) {
+    alert('AI Error: ' + r.error);
+    prog.textContent = 'AI generation failed';
+    return;
+  }
+
+  if (r.script_id) {
+    // AI created a new script with segments
+    currentScriptId = r.script_id;
+    await loadScripts();
+    alert(`AI generated ${r.section_count} segments for "${r.script_name}"`);
+  } else {
+    await loadScript(currentScriptId);
+  }
 }
 
 async function exportEDL() {
-  if (!currentScriptId) return;
-  const a = document.createElement('a');
-  a.href = `/api/export/edl/${currentScriptId}`;
-  a.download = `script_${currentScriptId}.edl`;
-  // Use POST via fetch
+  if (!currentScriptId) { alert('Select a script first'); return; }
   const r = await fetch(`/api/export/edl/${currentScriptId}`, { method: 'POST' });
   const blob = await r.blob();
+  const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
+  a.download = `script_${currentScriptId}.edl`;
   a.click();
 }
 
+async function pushToResolve() {
+  if (!currentScriptId) { alert('Select a script first'); return; }
+  if (!confirm('Push this script to DaVinci Resolve as a new timeline?')) return;
+  const r = await api(`/export/resolve/${currentScriptId}`, { method: 'POST' });
+  if (r.success) {
+    alert(`✅ Created timeline "${r.timeline_name}" in Resolve\n${r.segments_added}/${r.total_segments} segments added`);
+  } else {
+    alert('Error: ' + (r.error || 'Unknown error'));
+  }
+}
+
 function showBrainstorm() {
+  showModal('🧠 AI Brainstorm', `
+    <label>What kind of edit do you want?</label>
+    <textarea id="modal-prompt" placeholder="Describe your vision..."></textarea>
+    <div class="result" id="ai-result" style="display:none"></div>
+  `, async () => {
+    const prompt = document.getElementById('modal-prompt').value;
+    const res = document.getElementById('ai-result');
+    res.style.display = 'block'; res.textContent = 'Thinking...';
+    const r = await api('/ai/brainstorm', { method: 'POST', body: { prompt }});
+    res.textContent = r.suggestions || r.error || 'No response';
+  }, 'Generate', true);
+}
+
+// ─── Modal ─────────────────────────────────────────────────────────
+function showModal(title, bodyHTML, onConfirm, confirmText = 'Create', keepOpen = false) {
   const mc = document.getElementById('modal-container');
   mc.innerHTML = `
     <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
       <div class="modal">
-        <h3>🧠 AI Brainstorm</h3>
-        <textarea id="ai-prompt" placeholder="Describe what kind of edit you want..."></textarea>
+        <h3>${title}</h3>
+        ${bodyHTML}
         <div class="modal-actions">
           <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-          <button class="btn-primary" onclick="doBrainstorm()">Generate</button>
+          <button class="btn-primary" id="modal-confirm">${confirmText}</button>
         </div>
-        <div class="result" id="ai-result" style="display:none"></div>
       </div>
     </div>`;
+  document.getElementById('modal-confirm').onclick = async () => {
+    if (!keepOpen) document.getElementById('modal-confirm').disabled = true;
+    await onConfirm();
+  };
 }
-
-async function doBrainstorm() {
-  const prompt = document.getElementById('ai-prompt').value;
-  const res = document.getElementById('ai-result');
-  res.style.display = 'block'; res.textContent = 'Thinking...';
-  const r = await api('/ai/brainstorm', { method: 'POST', body: { prompt }});
-  res.textContent = r.suggestions || r.error || 'No response';
-}
-
-async function doAutoEdit() {
-  if (!currentScriptId) { alert('Create a script first'); return; }
-  const prompt = window.prompt('Describe the edit you want (or leave blank for default):') ?? '';
-  const r = await api('/ai/auto-edit', { method: 'POST', body: { prompt }});
-  if (r.segments) {
-    for (const seg of r.segments) {
-      await api(`/script/${currentScriptId}/segments`, { method: 'POST', body: {
-        clip_id: seg.clip_id, start_time: seg.start_time, end_time: seg.end_time, section_name: seg.section_name
-      }});
-    }
-    loadScript(currentScriptId);
-    alert(`Added ${r.segments.length} segments from AI`);
-  } else {
-    alert(r.error || 'AI did not return usable segments');
-  }
-}
-
 function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
 
-// Drop clips onto script panel
+// ─── Drop clips onto script ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   const sb = document.getElementById('script-body');
   sb.addEventListener('dragover', e => e.preventDefault());
@@ -493,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await api(`/script/${currentScriptId}/segments`, { method: 'POST', body: {
         clip_id: parseInt(clipId), start_time: 0, end_time: clip.duration_seconds || 10
       }});
-      loadScript(currentScriptId);
+      await loadScript(currentScriptId);
     }
   });
 });
