@@ -701,12 +701,17 @@ CRITICAL RULES:
                 break  # Good enough
             print(f"  ⚠️ Under-planned ({planned_total:.1f}s vs {padded_duration}s). {'Retrying with gpt-4o...' if attempt == 0 else 'Proceeding anyway.'}", flush=True)
 
-        # Filter out micro-segments (< 2s) and cap long segments at 20s
+        # Filter out micro-segments (< 2s), cap long segments at 20s, bump 0.0s starts
         valid_sections = []
         for s in sections:
             dur = s.get('end_time', 0) - s.get('start_time', 0)
             if dur < 2.0:
                 continue
+            # Segments starting at 0.0s often have junk audio (count-ins, laughter, noise)
+            # Bump to 0.5s to skip the very start unless it's a very short clip
+            if s.get('start_time', 0) == 0.0 and dur > 3.0:
+                s['start_time'] = 0.5
+                print(f"  Bumped '{s.get('section_name','')}' start from 0.0s to 0.5s (avoid junk audio)", flush=True)
             if dur > 20.0:
                 s['end_time'] = s['start_time'] + 20.0
                 print(f"  Capped segment '{s.get('section_name','')}' from {dur:.1f}s to 20.0s", flush=True)
