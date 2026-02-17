@@ -7,123 +7,221 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#12141f;--surface:#171928;--surface2:#1c2035;--editor-bg:#1e2235;
-  --accent:#e94560;--accent2:#0f3460;--text:#eee;--text2:#8892a8;--text3:#556;
-  --green:#4ade80;--green-dark:#16a34a;--orange:#f59e0b;--border:#2a3050;
-  --radius:8px;--transition:0.15s ease;
-  --clip-colors: #e94560,#3b82f6,#10b981,#f59e0b,#8b5cf6,#ec4899,#06b6d4,#f97316;
+  --bg:#0f1119;--surface:#161822;--surface2:#1c1f2e;--surface3:#222639;
+  --accent:#e94560;--accent2:#c73a52;--text:#eaedf3;--text2:#8892a8;--text3:#505672;
+  --green:#4ade80;--green-dark:#16a34a;--orange:#f59e0b;--blue:#3b82f6;
+  --border:#262a3e;--border2:#353a52;
+  --radius:8px;--radius-lg:12px;--transition:0.18s ease;
+  --doc-bg:#1a1d2e;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
 button{cursor:pointer;font-family:inherit;border:none;border-radius:var(--radius);transition:all var(--transition)}
 button:hover{filter:brightness(1.15)}
-input,select,textarea{font-family:inherit;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;outline:none}
+button:active{transform:scale(0.97)}
+input,select,textarea{font-family:inherit;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;outline:none;transition:border var(--transition)}
 input:focus,select:focus,textarea:focus{border-color:var(--accent)}
-::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-.btn{padding:8px 16px;font-size:13px;font-weight:600;border-radius:var(--radius)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border2)}
+
+.btn{padding:8px 18px;font-size:13px;font-weight:600;border-radius:var(--radius);display:inline-flex;align-items:center;gap:6px}
 .btn-accent{background:var(--accent);color:#fff}
 .btn-green{background:var(--green-dark);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
 .btn-secondary{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
-.btn-small{padding:5px 10px;font-size:12px}
+.btn-ghost{background:transparent;color:var(--text2);padding:6px 12px}
+.btn-ghost:hover{background:var(--surface2)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-lg{padding:12px 28px;font-size:15px;border-radius:var(--radius-lg)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-sony{background:#3b82f620;color:#60a5fa}
+.badge-dji{background:#f59e0b20;color:#fbbf24}
+.badge-unknown{background:#64748b20;color:#94a3b8}
+.badge-transcribed{background:#4ade8020;color:#4ade80}
+.badge-pending{background:#f59e0b20;color:#f59e0b}
 
-/* ── HEADER ── */
-.header{display:flex;align-items:center;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border);gap:16px;flex-shrink:0}
+/* Header */
+.header{display:flex;align-items:center;padding:0 20px;height:52px;background:var(--surface);border-bottom:1px solid var(--border);gap:16px;flex-shrink:0;z-index:100}
 .logo{font-size:18px;font-weight:800;color:var(--accent);letter-spacing:-0.5px}
-.project-name{color:var(--text2);font-size:13px;margin-right:auto}
+.project-name{color:var(--text2);font-size:13px}
+.header-spacer{flex:1}
+.resolve-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
 .resolve-dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0}
-.resolve-dot.on{background:var(--green)}
+.resolve-dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}
 .resolve-dot.off{background:var(--accent)}
-.resolve-label{font-size:12px;color:var(--text2);margin-right:12px}
-.header .btn{margin-left:4px}
 
-/* ── MAIN LAYOUT ── */
-.main{flex:1;display:flex;overflow:hidden}
-.editor-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
-.sidebar{width:280px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
-.sidebar.collapsed{width:0;border:none}
-.sidebar-toggle{position:absolute;right:280px;top:60px;z-index:10;background:var(--surface);border:1px solid var(--border);border-right:none;border-radius:var(--radius) 0 0 var(--radius);padding:4px 6px;color:var(--text2);font-size:14px;cursor:pointer}
-.sidebar.collapsed+.sidebar-toggle,.sidebar.collapsed~.sidebar-toggle{right:0}
+/* Tab Nav */
+.tab-nav{display:flex;gap:0;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0}
+.tab-btn{padding:12px 24px;font-size:13px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text3);background:transparent;border:none;border-bottom:2px solid transparent;border-radius:0;transition:all var(--transition);position:relative}
+.tab-btn:hover{color:var(--text2);filter:none}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn .tab-count{font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2);padding:1px 6px;border-radius:8px;margin-left:6px}
 
-/* ── SCRIPT EDITOR ── */
-.editor-scroll{flex:1;overflow-y:auto;padding:20px 0}
-.editor-doc{max-width:800px;margin:0 auto;padding:0 32px}
-.no-transcript{text-align:center;color:var(--text2);padding:80px 20px}
-.no-transcript h2{margin-bottom:12px;color:var(--text)}
-.no-transcript p{margin-bottom:20px;line-height:1.6}
+/* Tab content */
+.tab-content{flex:1;overflow:hidden;display:none}
+.tab-content.active{display:flex;flex-direction:column}
 
-/* Clip section */
-.clip-section{margin-bottom:24px;position:relative}
-.clip-header{display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:4px;border-radius:var(--radius);background:var(--surface);cursor:grab;user-select:none}
-.clip-header.dragging{opacity:0.5}
-.clip-header .drag-handle{color:var(--text3);font-size:14px;cursor:grab}
-.clip-thumb-small{width:48px;height:28px;border-radius:4px;overflow:hidden;background:var(--surface2);flex-shrink:0}
-.clip-thumb-small img{width:100%;height:100%;object-fit:cover}
-.clip-header-name{font-size:13px;font-weight:700;flex:1}
-.clip-header-dur{font-size:11px;color:var(--text2)}
-.clip-header-actions{display:flex;gap:4px}
-.clip-header-actions button{background:none;color:var(--text2);font-size:12px;padding:2px 6px}
+/* ═══ TAB 1: CLIPS ═══ */
+.clips-stats{display:flex;gap:24px;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.stat-item{display:flex;flex-direction:column;gap:2px}
+.stat-value{font-size:20px;font-weight:700;color:var(--text)}
+.stat-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+.clips-toolbar{display:flex;align-items:center;gap:10px;padding:12px 24px;flex-shrink:0;flex-wrap:wrap}
+.filter-chips{display:flex;gap:6px}
+.chip{padding:5px 14px;font-size:12px;font-weight:600;border-radius:20px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:all var(--transition)}
+.chip:hover{border-color:var(--text3)}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sort-group{display:flex;align-items:center;gap:6px;margin-left:auto}
+.sort-group label{font-size:12px;color:var(--text3)}
+.sort-group select{padding:4px 8px;font-size:12px}
 
-/* Segment row */
-.segment-row{display:flex;align-items:flex-start;gap:0;padding:3px 0;border-radius:4px;transition:background var(--transition);position:relative;cursor:pointer}
-.segment-row:hover{background:rgba(255,255,255,0.03)}
-.segment-row.selected{background:rgba(233,69,96,0.1)}
-.segment-row.excluded{opacity:0.3}
-.segment-row.excluded .seg-text{text-decoration:line-through}
-.segment-row.drag-over-top{border-top:2px solid var(--accent)}
-.segment-row.drag-over-bottom{border-bottom:2px solid var(--accent)}
-.seg-tc{width:56px;flex-shrink:0;font-size:11px;color:var(--text3);font-family:'SF Mono',Monaco,Consolas,monospace;padding-top:3px;text-align:right;padding-right:8px;user-select:none}
-.seg-check{width:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding-top:2px}
-.seg-check input{accent-color:var(--accent);cursor:pointer}
-.seg-text{flex:1;font-size:14px;line-height:1.6;padding:1px 4px;color:var(--text)}
-.seg-text .filler{background:rgba(245,158,11,0.2);border-radius:2px;padding:0 1px}
-.clip-border{width:3px;flex-shrink:0;border-radius:2px;margin-right:6px;align-self:stretch}
+.clips-body{flex:1;display:flex;overflow:hidden}
+.clips-grid-wrap{flex:1;overflow-y:auto;padding:16px 24px}
+.clips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.clip-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:all var(--transition)}
+.clip-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px #0004}
+.clip-card.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.clip-thumb{width:100%;aspect-ratio:16/9;background:var(--surface2);object-fit:cover;display:block}
+.clip-info{padding:10px 12px}
+.clip-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:12px;color:var(--text2)}
+.clip-duration{font-variant-numeric:tabular-nums}
+.clip-preview-text{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
-/* Tooltip */
-.seg-tooltip{position:absolute;left:100%;top:0;margin-left:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-size:11px;color:var(--text2);white-space:nowrap;z-index:100;pointer-events:none;display:none}
-.segment-row:hover .seg-tooltip{display:block}
+/* Clip detail panel */
+.clip-detail{width:420px;background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0;display:none;padding:0}
+.clip-detail.open{display:block}
+.clip-detail-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.clip-detail-header h3{font-size:15px;font-weight:700}
+.clip-detail-close{background:transparent;color:var(--text2);font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius)}
+.clip-detail-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--surface2);display:block}
+.clip-detail-body{padding:20px}
+.detail-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border)}
+.detail-row .label{color:var(--text2)}
+.detail-row .value{font-weight:600;text-align:right;max-width:60%;word-break:break-all}
+.clip-transcript{margin-top:20px}
+.clip-transcript h4{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+.transcript-segment{font-size:13px;line-height:1.7;color:var(--text);padding:4px 0}
+.transcript-segment .tc{color:var(--text3);font-size:11px;font-variant-numeric:tabular-nums;margin-right:8px}
+.no-transcript-msg{color:var(--text3);font-size:13px;font-style:italic}
 
-/* ── SIDEBAR SECTIONS ── */
-.sidebar-section{padding:14px 16px;border-bottom:1px solid var(--border)}
-.sidebar-section h3{font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:10px}
-.sidebar-section .stat{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
-.sidebar-section .stat .val{color:var(--text);font-weight:600}
-.clips-list{max-height:200px;overflow-y:auto}
-.clips-list-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:var(--text2)}
-.clips-list-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.ai-tools{display:flex;flex-direction:column;gap:6px}
-.sidebar-section .btn{width:100%;text-align:center}
-.export-tools{display:flex;flex-direction:column;gap:6px}
+/* ═══ TAB 2: SCRIPTS ═══ */
+.scripts-layout{flex:1;display:flex;overflow:hidden}
+.scripts-left{width:420px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.scripts-left-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.scripts-left-header h3{font-size:14px;font-weight:700;flex:1}
+.clip-selector{flex:1;overflow-y:auto;padding:8px 0}
+.clip-select-item{display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;transition:background var(--transition)}
+.clip-select-item:hover{background:var(--surface2)}
+.clip-select-item input[type="checkbox"]{accent-color:var(--accent);width:16px;height:16px;flex-shrink:0}
+.clip-select-thumb{width:48px;height:27px;border-radius:4px;object-fit:cover;background:var(--surface2);flex-shrink:0}
+.clip-select-info{flex:1;min-width:0}
+.clip-select-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip-select-meta{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selection-summary{padding:12px 20px;border-top:1px solid var(--border);font-size:12px;color:var(--text2);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.selection-summary strong{color:var(--text)}
 
-/* ── MINI TIMELINE ── */
-.mini-timeline{height:40px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;padding:4px 20px;gap:12px}
-.timeline-bar{flex:1;height:24px;background:var(--surface2);border-radius:4px;position:relative;overflow:hidden;cursor:pointer}
-.timeline-block{position:absolute;top:0;height:100%;border-radius:2px;transition:opacity var(--transition)}
-.timeline-block.excluded{opacity:0.15}
-.timeline-duration{font-size:12px;color:var(--text2);white-space:nowrap;flex-shrink:0}
+/* Create script form */
+.create-script-form{padding:20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+.form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.3px}
+.form-group{margin-bottom:14px}
+.form-group input,.form-group select,.form-group textarea{width:100%;font-size:13px}
+.form-group textarea{resize:vertical;min-height:60px}
+.duration-presets{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.dur-btn{padding:4px 10px;font-size:11px;font-weight:600;border-radius:14px;background:var(--surface);color:var(--text2);border:1px solid var(--border);cursor:pointer;transition:all var(--transition)}
+.dur-btn:hover{border-color:var(--text3)}
+.dur-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ai-note{font-size:11px;color:var(--text3);font-style:italic;margin-top:8px;line-height:1.4}
 
-/* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;display:none;align-items:center;justify-content:center}
-.modal-overlay.show{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:480px}
-.modal h2{margin-bottom:16px;font-size:18px}
-.modal label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px;margin-top:12px}
-.modal select,.modal input,.modal textarea{width:100%;margin-bottom:4px}
-.modal textarea{height:80px;resize:vertical}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+/* Scripts right panel */
+.scripts-right{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.scripts-right-header{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.scripts-right-header select{font-size:13px;flex:1;max-width:300px}
+.script-doc{flex:1;overflow-y:auto;padding:32px}
+.script-doc-inner{max-width:720px;margin:0 auto}
+.script-title{font-size:22px;font-weight:800;margin-bottom:8px}
+.script-subtitle{font-size:13px;color:var(--text2);margin-bottom:24px}
+.script-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:12px;overflow:hidden;transition:box-shadow var(--transition)}
+.script-section:hover{box-shadow:0 4px 16px #0003}
+.script-section-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.script-section-name{font-size:14px;font-weight:700;flex:1}
+.script-section-name[contenteditable]{outline:none;border-bottom:1px dashed transparent}
+.script-section-name[contenteditable]:focus{border-bottom-color:var(--accent)}
+.script-section-dur{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
+.script-section-body{padding:14px 16px}
+.script-clip-ref{font-size:12px;color:var(--blue);font-weight:600;margin-bottom:6px}
+.script-section-text{font-size:13px;line-height:1.7;color:var(--text)}
+.script-section-controls{display:flex;gap:4px;padding:8px 16px;border-top:1px solid var(--border)}
+.script-total{margin-top:20px;padding:16px;text-align:right;font-size:14px;color:var(--text2)}
+.script-total strong{color:var(--text);font-size:18px}
+.script-empty{text-align:center;padding:80px 20px;color:var(--text3)}
+.script-empty h3{font-size:18px;color:var(--text2);margin-bottom:8px}
+.script-actions{display:flex;gap:8px;padding:16px 24px;border-top:1px solid var(--border);flex-shrink:0}
 
-/* ── TOAST ── */
-.toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:var(--green-dark);color:#fff;padding:10px 20px;border-radius:var(--radius);font-size:14px;font-weight:600;z-index:2000;opacity:0;transition:opacity 0.3s;pointer-events:none}
-.toast.show{opacity:1}
-.toast.error{background:var(--accent)}
+/* ═══ TAB 3: TIMELINE ═══ */
+.timeline-header{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.timeline-header h3{font-size:16px;font-weight:700;flex:1}
+.timeline-body{flex:1;display:flex;overflow:hidden}
+.timeline-script-panel{width:55%;overflow-y:auto;padding:24px 32px;background:var(--doc-bg);border-right:1px solid var(--border)}
+.timeline-preview-panel{width:45%;display:flex;flex-direction:column;overflow:hidden}
 
-/* ── LOADING ── */
-.loading-bar{height:3px;background:var(--accent);position:absolute;top:0;left:0;width:0;transition:width 0.3s;z-index:100}
-.loading-bar.active{animation:loading 2s infinite}
-@keyframes loading{0%{width:0}50%{width:60%}100%{width:100%}}
+/* Timeline script document */
+.tl-section-header{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin:24px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.tl-section-header:first-child{margin-top:0}
+.tl-segment{display:flex;gap:14px;padding:12px 14px;border-radius:var(--radius);cursor:pointer;transition:all var(--transition);margin-bottom:4px}
+.tl-segment:hover{background:var(--surface2)}
+.tl-segment.active{background:var(--accent)15;border-left:3px solid var(--accent);padding-left:11px}
+.tl-segment-thumb{width:64px;height:36px;border-radius:4px;object-fit:cover;background:var(--surface2);flex-shrink:0}
+.tl-segment-content{flex:1;min-width:0}
+.tl-segment-speaker{font-size:11px;font-weight:700;color:var(--blue);margin-bottom:2px}
+.tl-segment-text{font-size:13px;line-height:1.6;color:var(--text)}
+.tl-segment-tc{font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums;flex-shrink:0;text-align:right;min-width:50px;padding-top:2px}
 
-@media(max-width:768px){
-  .sidebar{position:fixed;right:0;top:50px;bottom:40px;z-index:50;width:100%;max-width:320px;transform:translateX(100%);transition:transform 0.2s}
-  .sidebar.open{transform:translateX(0)}
-  .editor-doc{padding:0 16px}
+/* Preview panel */
+.preview-frame{flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;min-height:0}
+.preview-frame img{max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--radius)}
+.preview-placeholder{color:var(--text3);font-size:14px;text-align:center}
+.preview-info{padding:16px 20px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.preview-clip-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.preview-clip-tc{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
+.preview-controls{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.preview-controls button{width:40px;height:40px;border-radius:50%;background:var(--surface2);color:var(--text);font-size:16px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+.preview-controls button.play-btn{width:48px;height:48px;background:var(--accent);border:none;font-size:18px}
+.preview-segment-info{padding:12px 20px;border-top:1px solid var(--border);background:var(--surface);font-size:12px;color:var(--text2);flex-shrink:0}
+
+/* Filmstrip timeline */
+.filmstrip{height:80px;background:var(--surface);border-top:1px solid var(--border);display:flex;overflow-x:auto;padding:8px 12px;gap:4px;flex-shrink:0;align-items:stretch}
+.filmstrip-block{flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px;padding:6px 8px;cursor:pointer;transition:all var(--transition);overflow:hidden}
+.filmstrip-block:hover{border-color:var(--border2)}
+.filmstrip-block.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.filmstrip-thumb{width:40px;height:28px;border-radius:3px;object-fit:cover;background:var(--bg);flex-shrink:0}
+.filmstrip-text{font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.filmstrip-dur{font-size:10px;color:var(--text3);flex-shrink:0;font-variant-numeric:tabular-nums}
+.filmstrip-total{display:flex;align-items:center;padding:0 12px;font-size:11px;color:var(--text3);flex-shrink:0;font-weight:600}
+
+/* Loading spinner */
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:600;animation:slideIn 0.3s ease;box-shadow:0 8px 24px #0006}
+.toast.success{background:var(--green-dark);color:#fff}
+.toast.error{background:var(--accent);color:#fff}
+.toast.info{background:var(--blue);color:#fff}
+@keyframes slideIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Responsive */
+@media(max-width:900px){
+  .clips-body{flex-direction:column}
+  .clip-detail{width:100%;border-left:none;border-top:1px solid var(--border)}
+  .scripts-layout{flex-direction:column}
+  .scripts-left{width:100%;max-height:50vh}
+  .timeline-body{flex-direction:column}
+  .timeline-script-panel,.timeline-preview-panel{width:100%}
+  .timeline-script-panel{max-height:50vh}
 }
 </style>
 </head>
@@ -132,623 +230,725 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 <!-- Header -->
 <div class="header">
   <div class="logo">ResolveFlow</div>
-  <div class="project-name" id="projectName">Loading...</div>
-  <div class="resolve-dot" id="resolveDot"></div>
-  <span class="resolve-label" id="resolveLabel">Checking...</span>
-  <button class="btn btn-secondary" onclick="transcribeAll()" id="btnTranscribe">Transcribe All</button>
-  <button class="btn btn-accent" onclick="showAIModal()" id="btnAI">AI Generate</button>
-  <button class="btn btn-green" onclick="sendToResolve()" id="btnResolve">⏩ Send to Resolve</button>
+  <div class="project-name" id="projectName">Loading…</div>
+  <div class="header-spacer"></div>
+  <div class="resolve-status">
+    <div class="resolve-dot" id="resolveDot"></div>
+    <span id="resolveLabel">Checking…</span>
+  </div>
+  <button class="btn btn-secondary btn-sm" onclick="doIngest()">⟳ Rescan</button>
+  <button class="btn btn-accent btn-sm" id="transcribeBtn" onclick="doTranscribe()">Transcribe All</button>
 </div>
 
-<div class="loading-bar" id="loadingBar"></div>
+<!-- Tab Nav -->
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="clips" onclick="switchTab('clips')">Clips <span class="tab-count" id="clipCount">0</span></button>
+  <button class="tab-btn" data-tab="scripts" onclick="switchTab('scripts')">Scripts <span class="tab-count" id="scriptCount">0</span></button>
+  <button class="tab-btn" data-tab="timeline" onclick="switchTab('timeline')">Timeline</button>
+</div>
 
-<!-- Main -->
-<div class="main">
-  <!-- Editor Area -->
-  <div class="editor-area">
-    <div class="editor-scroll" id="editorScroll">
-      <div class="editor-doc" id="editorDoc">
-        <div class="no-transcript" id="emptyState">
-          <h2>No Transcript Yet</h2>
-          <p>Click <strong>Transcribe All</strong> to generate transcripts from your clips,<br>
-          or use <strong>AI Generate</strong> to create an AI-powered edit.</p>
-          <button class="btn btn-accent" onclick="transcribeAll()">Transcribe All Clips</button>
+<!-- ═══ CLIPS TAB ═══ -->
+<div class="tab-content active" id="tab-clips">
+  <div class="clips-stats" id="clipsStats"></div>
+  <div class="clips-toolbar">
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all" onclick="setFilter('all',this)">All</button>
+      <button class="chip" data-filter="Sony" onclick="setFilter('Sony',this)">Sony</button>
+      <button class="chip" data-filter="DJI" onclick="setFilter('DJI',this)">DJI</button>
+      <button class="chip" data-filter="transcribed" onclick="setFilter('transcribed',this)">Transcribed</button>
+      <button class="chip" data-filter="pending" onclick="setFilter('pending',this)">Pending</button>
+    </div>
+    <div class="sort-group">
+      <label>Sort:</label>
+      <select id="sortSelect" onchange="renderClips()">
+        <option value="name">Name</option>
+        <option value="duration">Duration</option>
+        <option value="camera">Device</option>
+      </select>
+    </div>
+  </div>
+  <div class="clips-body">
+    <div class="clips-grid-wrap">
+      <div class="clips-grid" id="clipsGrid"></div>
+    </div>
+    <div class="clip-detail" id="clipDetail"></div>
+  </div>
+</div>
+
+<!-- ═══ SCRIPTS TAB ═══ -->
+<div class="tab-content" id="tab-scripts">
+  <div class="scripts-layout">
+    <div class="scripts-left">
+      <div class="scripts-left-header">
+        <h3>Select Clips</h3>
+        <button class="btn btn-ghost btn-sm" onclick="selectAllClips()">Select All</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearClipSelection()">Clear</button>
+      </div>
+      <div class="clip-selector" id="clipSelector"></div>
+      <div class="selection-summary" id="selectionSummary">
+        <strong>0</strong> clips selected · <span>0:00</span> total
+      </div>
+      <div class="create-script-form">
+        <div class="form-group">
+          <label class="form-label">Script Name</label>
+          <input type="text" id="scriptNameInput" placeholder="My Edit">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Duration</label>
+          <div class="duration-presets" id="durPresets">
+            <button class="dur-btn" data-dur="30">30s</button>
+            <button class="dur-btn" data-dur="60">1min</button>
+            <button class="dur-btn active" data-dur="120">2min</button>
+            <button class="dur-btn" data-dur="300">5min</button>
+            <button class="dur-btn" data-dur="600">10min</button>
+            <button class="dur-btn" data-dur="0">Full</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Style</label>
+          <select id="styleSelect">
+            <option>Highlight Reel</option>
+            <option>Documentary</option>
+            <option>Interview</option>
+            <option>Social Media</option>
+            <option>Tutorial</option>
+            <option>Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Instructions</label>
+          <textarea id="promptInput" placeholder="What should this video be about? What's the story?" rows="3"></textarea>
+        </div>
+        <button class="btn btn-accent btn-lg" style="width:100%" id="generateBtn" onclick="generateScript()">✨ Generate with AI</button>
+        <div class="ai-note">AI will arrange and trim existing clips — it cannot create new dialog.</div>
+      </div>
+    </div>
+    <div class="scripts-right">
+      <div class="scripts-right-header">
+        <select id="scriptSelect" onchange="loadScript(this.value)">
+          <option value="">— Select a script —</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="duplicateScript()">Duplicate</button>
+        <button class="btn btn-secondary btn-sm" style="color:var(--accent)" onclick="deleteScript()">Delete</button>
+      </div>
+      <div class="script-doc" id="scriptDoc">
+        <div class="script-empty">
+          <h3>No script loaded</h3>
+          <p>Select clips on the left and generate a script with AI,<br>or choose an existing script above.</p>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Right Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-section">
-      <h3>Script Info</h3>
-      <div class="stat"><span>Duration</span><span class="val" id="statDuration">0:00</span></div>
-      <div class="stat"><span>Word Count</span><span class="val" id="statWords">0</span></div>
-      <div class="stat"><span>Segments</span><span class="val" id="statSegments">0 / 0</span></div>
-    </div>
-    <div class="sidebar-section">
-      <h3>Clips Used</h3>
-      <div class="clips-list" id="clipsList"></div>
-    </div>
-    <div class="sidebar-section">
-      <h3>AI Tools</h3>
-      <div class="ai-tools">
-        <button class="btn btn-accent" onclick="showAIModal()">✨ AI Generate Script</button>
-        <button class="btn btn-secondary" onclick="aiTighten()">✂️ Tighten Edit</button>
-        <button class="btn btn-secondary" onclick="removeSilences()">🔇 Remove Silences</button>
-        <button class="btn btn-secondary" onclick="removeFillerWords()">🗑️ Remove Filler Words</button>
-      </div>
-    </div>
-    <div class="sidebar-section">
-      <h3>Export</h3>
-      <div class="export-tools">
-        <button class="btn btn-green" onclick="sendToResolve()">⏩ Send to Resolve</button>
-        <button class="btn btn-secondary" onclick="exportEDL()">📄 Export EDL</button>
-        <button class="btn btn-secondary" onclick="exportText()">📝 Export Text</button>
+      <div class="script-actions" id="scriptActions" style="display:none">
+        <div style="flex:1"></div>
+        <button class="btn btn-green btn-lg" onclick="openInTimeline()">Open in Timeline →</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Mini Timeline -->
-<div class="mini-timeline">
-  <div class="timeline-bar" id="timelineBar"></div>
-  <div class="timeline-duration" id="timelineDuration">0:00</div>
-</div>
-
-<!-- AI Modal -->
-<div class="modal-overlay" id="aiModal">
-  <div class="modal">
-    <h2>✨ AI Generate Script</h2>
-    <label>Target Duration</label>
-    <select id="aiDuration">
-      <option value="30">30 seconds</option>
-      <option value="60">1 minute</option>
-      <option value="120" selected>2 minutes</option>
-      <option value="300">5 minutes</option>
-      <option value="600">10 minutes</option>
-    </select>
-    <label>Style</label>
-    <select id="aiStyle">
-      <option value="highlight reel">Highlight Reel</option>
-      <option value="narrative documentary">Narrative Documentary</option>
-      <option value="fast-paced montage">Fast-Paced Montage</option>
-      <option value="interview edit">Interview Edit</option>
-      <option value="social media short">Social Media Short</option>
-    </select>
-    <label>Custom Prompt (optional)</label>
-    <textarea id="aiPrompt" placeholder="Any specific instructions..."></textarea>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeAIModal()">Cancel</button>
-      <button class="btn btn-accent" onclick="runAIGenerate()">Generate</button>
+<!-- ═══ TIMELINE TAB ═══ -->
+<div class="tab-content" id="tab-timeline">
+  <div class="timeline-header">
+    <button class="btn btn-ghost btn-sm" onclick="switchTab('scripts')">← Scripts</button>
+    <h3 id="timelineTitle">No script loaded</h3>
+    <span id="timelineDuration" style="font-size:13px;color:var(--text2)"></span>
+    <div style="flex:1"></div>
+    <button class="btn btn-secondary" onclick="exportEDL()">Export EDL</button>
+    <button class="btn btn-green btn-lg" onclick="sendToResolve()">🎬 Send to Resolve</button>
+  </div>
+  <div class="timeline-body">
+    <div class="timeline-script-panel" id="timelineScriptPanel"></div>
+    <div class="timeline-preview-panel">
+      <div class="preview-frame" id="previewFrame">
+        <div class="preview-placeholder">Select a segment to preview</div>
+      </div>
+      <div class="preview-controls">
+        <button onclick="prevSegment()">⏮</button>
+        <button class="play-btn">▶</button>
+        <button onclick="nextSegment()">⏭</button>
+      </div>
+      <div class="preview-info" id="previewInfo">
+        <div class="preview-clip-name">—</div>
+        <div class="preview-clip-tc">—</div>
+      </div>
+      <div class="preview-segment-info" id="previewSegmentInfo">Select a segment to see details</div>
     </div>
   </div>
+  <div class="filmstrip" id="filmstrip"></div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<div class="toast-container" id="toasts"></div>
 
 <script>
-// ── STATE ──
-let allSegments = [];   // {id, clip_id, text, start_time, end_time, filename, included, clip_color}
-let clipColors = {};
-let clipMeta = {};      // clip_id -> {filename, duration, thumbnail}
-let selectedSegIds = new Set();
-let lastClickedIdx = null;
-let currentScriptId = null;
+// ── State ──
+const S = {
+  activeTab: 'clips',
+  clips: [],
+  filter: 'all',
+  selectedClipDetail: null,
+  selectedClips: new Set(),
+  scripts: [],
+  currentScript: null,
+  currentScriptData: null,
+  timelineScript: null,
+  timelineSegmentIndex: 0,
+  transcripts: {},
+  targetDuration: 120,
+};
 
-const CLIP_PALETTE = ['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316','#84cc16','#ef4444','#14b8a6','#a855f7'];
-const FILLER_WORDS = /^(um+|uh+|uh huh|hmm+|like|you know|basically|actually|so|right|i mean|well|okay|yeah)[\.\,\!\?]?$/i;
-const FILLER_PATTERN = /\b(um+|uh+|hmm+|like|you know|basically|actually|i mean)\b/gi;
+// ── Helpers ──
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const api = async (path, opts) => {
+  const r = await fetch(`/api${path}`, opts);
+  if (!r.ok) throw new Error(`API ${r.status}`);
+  const ct = r.headers.get('content-type') || '';
+  return ct.includes('json') ? r.json() : r.text();
+};
+const apiPost = (path, body) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
 
-// ── INIT ──
-async function init() {
-  await Promise.all([loadProject(), checkResolve()]);
-  await loadClips();
-  await loadTranscripts();
-  renderEditor();
-  updateStats();
-  renderTimeline();
+function fmtDur(s) {
+  if (!s || s < 0) return '0:00';
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+function fmtDurLong(s) {
+  if (!s) return '0s';
+  if (s < 60) return `${Math.round(s)}s`;
+  const m = Math.floor(s / 60), sec = Math.round(s % 60);
+  return sec ? `${m}m ${sec}s` : `${m}m`;
 }
 
-async function api(path, opts) {
-  const r = await fetch('/api/' + path, opts);
-  return r.json();
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
 }
 
-async function loadProject() {
-  const p = await api('project');
-  document.getElementById('projectName').textContent = p.name || 'Unknown';
+const clipColors = ['#e94560','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+function clipColor(id) { return clipColors[(id - 1) % clipColors.length]; }
+
+// ── Tab switching ──
+function switchTab(tab) {
+  S.activeTab = tab;
+  $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  $$('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${tab}`));
+  if (tab === 'scripts') { renderClipSelector(); loadScriptsList(); }
+  if (tab === 'timeline' && S.timelineScript) renderTimeline();
 }
 
-async function checkResolve() {
+// ── Data loading ──
+async function loadAll() {
   try {
-    const s = await api('resolve/status');
-    const dot = document.getElementById('resolveDot');
-    const label = document.getElementById('resolveLabel');
-    if (s.connected) {
-      dot.className = 'resolve-dot on';
-      label.textContent = s.project || 'Connected';
-    } else {
-      dot.className = 'resolve-dot off';
-      label.textContent = 'Not connected';
-    }
-  } catch(e) {
-    document.getElementById('resolveDot').className = 'resolve-dot off';
-    document.getElementById('resolveLabel').textContent = 'Offline';
-  }
+    const [project, clips, resolveStatus] = await Promise.all([
+      api('/project'), api('/clips'), api('/resolve/status')
+    ]);
+    S.clips = clips;
+    $('#projectName').textContent = project.name || project.path;
+    $('#clipCount').textContent = clips.length;
+    $('#resolveDot').className = `resolve-dot ${resolveStatus.connected ? 'on' : 'off'}`;
+    $('#resolveLabel').textContent = resolveStatus.connected
+      ? `Resolve: ${resolveStatus.project || 'Connected'}` : 'Resolve: Offline';
+    renderClipsStats();
+    renderClips();
+    loadScriptsList();
+  } catch(e) { toast('Failed to load: ' + e.message, 'error'); }
 }
 
-async function loadClips() {
-  const clips = await api('clips');
-  let ci = 0;
-  for (const c of clips) {
-    if (!clipColors[c.id]) {
-      clipColors[c.id] = CLIP_PALETTE[ci % CLIP_PALETTE.length];
-      ci++;
-    }
-    clipMeta[c.id] = { filename: c.filename, duration: c.duration_seconds, thumbnail: c.thumbnail_path ? true : false, has_transcript: c.has_transcript };
-  }
+// ── CLIPS TAB ──
+function renderClipsStats() {
+  const clips = S.clips;
+  const total = clips.length;
+  const dur = clips.reduce((a, c) => a + (c.duration_seconds || 0), 0);
+  const sony = clips.filter(c => c.camera === 'Sony').length;
+  const dji = clips.filter(c => c.camera === 'DJI').length;
+  const transcribed = clips.filter(c => c.has_transcript).length;
+  $('#clipsStats').innerHTML = `
+    <div class="stat-item"><div class="stat-value">${total}</div><div class="stat-label">Clips</div></div>
+    <div class="stat-item"><div class="stat-value">${fmtDurLong(dur)}</div><div class="stat-label">Total Duration</div></div>
+    <div class="stat-item"><div class="stat-value">${sony}</div><div class="stat-label">Sony</div></div>
+    <div class="stat-item"><div class="stat-value">${dji}</div><div class="stat-label">DJI</div></div>
+    <div class="stat-item"><div class="stat-value">${transcribed}/${total}</div><div class="stat-label">Transcribed</div></div>
+  `;
 }
 
-async function loadTranscripts() {
-  const segs = await api('transcript/full');
-  allSegments = segs.map((s, i) => ({
-    id: s.id,
-    clip_id: s.clip_id,
-    text: s.text,
-    start_time: s.start_time,
-    end_time: s.end_time,
-    filename: s.filename,
-    included: true,
-    order: i,
-    clip_color: clipColors[s.clip_id] || '#666'
-  }));
+function setFilter(f, el) {
+  S.filter = f;
+  $$('.filter-chips .chip').forEach(c => c.classList.toggle('active', c === el));
+  renderClips();
 }
 
-// ── FORMAT HELPERS ──
-function fmtTC(sec) {
-  if (sec == null) return '0:00';
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
+function getFilteredClips() {
+  let clips = [...S.clips];
+  if (S.filter === 'Sony') clips = clips.filter(c => c.camera === 'Sony');
+  else if (S.filter === 'DJI') clips = clips.filter(c => c.camera === 'DJI');
+  else if (S.filter === 'transcribed') clips = clips.filter(c => c.has_transcript);
+  else if (S.filter === 'pending') clips = clips.filter(c => !c.has_transcript);
+
+  const sort = $('#sortSelect').value;
+  if (sort === 'name') clips.sort((a,b) => a.filename.localeCompare(b.filename));
+  else if (sort === 'duration') clips.sort((a,b) => (b.duration_seconds||0) - (a.duration_seconds||0));
+  else if (sort === 'camera') clips.sort((a,b) => (a.camera||'').localeCompare(b.camera||''));
+  return clips;
 }
 
-function highlightFillers(text) {
-  return text.replace(FILLER_PATTERN, '<span class="filler">$1</span>');
+function renderClips() {
+  const clips = getFilteredClips();
+  const grid = $('#clipsGrid');
+  grid.innerHTML = clips.map(c => `
+    <div class="clip-card ${S.selectedClipDetail === c.id ? 'selected' : ''}" onclick="showClipDetail(${c.id})">
+      <img class="clip-thumb" src="/api/thumbnails/${c.id}" onerror="this.style.background='var(--surface2)';this.src=''" loading="lazy">
+      <div class="clip-info">
+        <div class="clip-name">${c.filename}</div>
+        <div class="clip-meta">
+          <span class="clip-duration">${fmtDur(c.duration_seconds)}</span>
+          <span class="badge badge-${(c.camera||'unknown').toLowerCase()}">${c.camera||'?'}</span>
+          ${c.has_transcript ? '<span class="badge badge-transcribed">✓</span>' : '<span class="badge badge-pending">…</span>'}
+        </div>
+        ${c.transcript_preview ? `<div class="clip-preview-text">${escHtml(c.transcript_preview)}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
 }
 
-function isFillerSegment(text) {
-  return FILLER_WORDS.test(text.trim());
-}
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-// ── RENDER EDITOR ──
-function renderEditor() {
-  const doc = document.getElementById('editorDoc');
-  const empty = document.getElementById('emptyState');
+async function showClipDetail(id) {
+  S.selectedClipDetail = id;
+  renderClips();
+  const clip = S.clips.find(c => c.id === id);
+  if (!clip) return;
 
-  if (allSegments.length === 0) {
-    empty.style.display = '';
-    return;
-  }
-  empty.style.display = 'none';
+  const panel = $('#clipDetail');
+  panel.classList.add('open');
 
-  // Group by clip in order
-  const groups = [];
-  let currentClip = null;
-  for (const seg of allSegments) {
-    if (seg.clip_id !== currentClip) {
-      groups.push({ clip_id: seg.clip_id, filename: seg.filename, segments: [] });
-      currentClip = seg.clip_id;
-    }
-    groups[groups.length - 1].segments.push(seg);
-  }
-
-  let html = '';
-  for (const g of groups) {
-    const color = clipColors[g.clip_id] || '#666';
-    const meta = clipMeta[g.clip_id] || {};
-    const includedDur = g.segments.filter(s => s.included).reduce((a, s) => a + (s.end_time - s.start_time), 0);
-
-    html += `<div class="clip-section" data-clip-id="${g.clip_id}" draggable="true" ondragstart="dragClipStart(event, ${g.clip_id})" ondragover="dragClipOver(event)" ondrop="dropClip(event, ${g.clip_id})">`;
-    html += `<div class="clip-header" style="border-left:3px solid ${color}">`;
-    html += `<span class="drag-handle">⠿</span>`;
-    html += `<div class="clip-thumb-small"><img src="/api/thumbnails/${g.clip_id}" onerror="this.parentElement.textContent='🎬'"></div>`;
-    html += `<span class="clip-header-name" style="color:${color}">${g.filename}</span>`;
-    html += `<span class="clip-header-dur">${fmtTC(includedDur)}</span>`;
-    html += `<div class="clip-header-actions">`;
-    html += `<button onclick="toggleClip(${g.clip_id}, true)" title="Include all">☑️</button>`;
-    html += `<button onclick="toggleClip(${g.clip_id}, false)" title="Exclude all">☐</button>`;
-    html += `</div></div>`;
-
-    for (const seg of g.segments) {
-      const idx = allSegments.indexOf(seg);
-      const sel = selectedSegIds.has(seg.id) ? ' selected' : '';
-      const exc = !seg.included ? ' excluded' : '';
-      html += `<div class="segment-row${sel}${exc}" data-seg-id="${seg.id}" data-idx="${idx}" onclick="clickSegment(event, ${idx})">`;
-      html += `<div class="clip-border" style="background:${color}"></div>`;
-      html += `<div class="seg-tc">${fmtTC(seg.start_time)}</div>`;
-      html += `<div class="seg-check"><input type="checkbox" ${seg.included ? 'checked' : ''} onclick="event.stopPropagation();toggleSegment(${idx})" tabindex="-1"></div>`;
-      html += `<div class="seg-text">${highlightFillers(seg.text)}</div>`;
-      html += `<div class="seg-tooltip">${seg.filename} · ${fmtTC(seg.start_time)} – ${fmtTC(seg.end_time)}</div>`;
-      html += `</div>`;
-    }
-    html += `</div>`;
+  // Load transcript
+  let transcriptHtml = '<div class="no-transcript-msg">No transcript available</div>';
+  if (clip.has_transcript) {
+    try {
+      const t = await api(`/transcript/${id}`);
+      if (t && t.segments && t.segments.length) {
+        transcriptHtml = t.segments.map(s =>
+          `<div class="transcript-segment"><span class="tc">[${fmtDur(s.start)}]</span>${escHtml(s.text)}</div>`
+        ).join('');
+        S.transcripts[id] = t;
+      } else if (t && t.full_text) {
+        transcriptHtml = `<div class="transcript-segment">${escHtml(t.full_text)}</div>`;
+      }
+    } catch(e) {}
   }
 
-  doc.innerHTML = html;
+  panel.innerHTML = `
+    <div class="clip-detail-header">
+      <h3>${escHtml(clip.filename)}</h3>
+      <button class="clip-detail-close" onclick="closeClipDetail()">✕</button>
+    </div>
+    <img class="clip-detail-thumb" src="/api/thumbnails/${id}" onerror="this.style.display='none'">
+    <div class="clip-detail-body">
+      <div class="detail-row"><span class="label">Duration</span><span class="value">${fmtDurLong(clip.duration_seconds)}</span></div>
+      <div class="detail-row"><span class="label">Resolution</span><span class="value">${clip.resolution || '—'}</span></div>
+      <div class="detail-row"><span class="label">Codec</span><span class="value">${clip.codec || '—'}</span></div>
+      <div class="detail-row"><span class="label">Camera</span><span class="value">${clip.camera || '—'}</span></div>
+      <div class="detail-row"><span class="label">FPS</span><span class="value">${clip.fps || '—'}</span></div>
+      <div class="detail-row"><span class="label">Path</span><span class="value" style="font-size:11px">${escHtml(clip.relative_path || '')}</span></div>
+      <div class="clip-transcript">
+        <h4>Transcript</h4>
+        ${transcriptHtml}
+      </div>
+    </div>
+  `;
 }
 
-// ── SEGMENT INTERACTIONS ──
-function toggleSegment(idx) {
-  allSegments[idx].included = !allSegments[idx].included;
-  renderEditor();
-  updateStats();
-  renderTimeline();
+function closeClipDetail() {
+  S.selectedClipDetail = null;
+  $('#clipDetail').classList.remove('open');
+  renderClips();
 }
 
-function clickSegment(event, idx) {
-  if (event.target.type === 'checkbox') return;
-  const seg = allSegments[idx];
+// ── SCRIPTS TAB ──
+function renderClipSelector() {
+  const clips = S.clips.filter(c => c.has_transcript);
+  $('#clipSelector').innerHTML = clips.length ? clips.map(c => `
+    <label class="clip-select-item">
+      <input type="checkbox" ${S.selectedClips.has(c.id)?'checked':''} onchange="toggleClipSelect(${c.id},this.checked)">
+      <img class="clip-select-thumb" src="/api/thumbnails/${c.id}" onerror="this.style.background='var(--surface2)'">
+      <div class="clip-select-info">
+        <div class="clip-select-name">${escHtml(c.filename)}</div>
+        <div class="clip-select-meta">${fmtDur(c.duration_seconds)} · ${escHtml((c.transcript_preview||'').slice(0,60))}</div>
+      </div>
+    </label>
+  `).join('') : '<div style="padding:20px;color:var(--text3);text-align:center">No transcribed clips yet</div>';
+  updateSelectionSummary();
+}
 
-  if (event.shiftKey && lastClickedIdx !== null) {
-    const from = Math.min(lastClickedIdx, idx);
-    const to = Math.max(lastClickedIdx, idx);
-    for (let i = from; i <= to; i++) selectedSegIds.add(allSegments[i].id);
-  } else if (event.metaKey || event.ctrlKey) {
-    if (selectedSegIds.has(seg.id)) selectedSegIds.delete(seg.id);
-    else selectedSegIds.add(seg.id);
-  } else {
-    selectedSegIds.clear();
-    selectedSegIds.add(seg.id);
+function toggleClipSelect(id, checked) {
+  if (checked) S.selectedClips.add(id); else S.selectedClips.delete(id);
+  updateSelectionSummary();
+}
+function selectAllClips() {
+  S.clips.filter(c => c.has_transcript).forEach(c => S.selectedClips.add(c.id));
+  renderClipSelector();
+}
+function clearClipSelection() {
+  S.selectedClips.clear();
+  renderClipSelector();
+}
+function updateSelectionSummary() {
+  const sel = [...S.selectedClips];
+  const dur = sel.reduce((a, id) => {
+    const c = S.clips.find(x => x.id === id);
+    return a + (c ? c.duration_seconds || 0 : 0);
+  }, 0);
+  $('#selectionSummary').innerHTML = `<strong>${sel.length}</strong> clips selected · <span>${fmtDurLong(dur)}</span> total`;
+}
+
+// Duration presets
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('dur-btn')) {
+    $$('.dur-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    S.targetDuration = parseInt(e.target.dataset.dur) || 0;
   }
-  lastClickedIdx = idx;
-  renderEditor();
-}
-
-function toggleClip(clipId, include) {
-  for (const s of allSegments) {
-    if (s.clip_id === clipId) s.included = include;
-  }
-  renderEditor();
-  updateStats();
-  renderTimeline();
-}
-
-function batchSetSelected(include) {
-  for (const s of allSegments) {
-    if (selectedSegIds.has(s.id)) s.included = include;
-  }
-  renderEditor();
-  updateStats();
-  renderTimeline();
-}
-
-// ── DRAG CLIP SECTIONS ──
-let dragClipId = null;
-function dragClipStart(e, clipId) {
-  dragClipId = clipId;
-  e.dataTransfer.effectAllowed = 'move';
-}
-function dragClipOver(e) { e.preventDefault(); }
-function dropClip(e, targetClipId) {
-  e.preventDefault();
-  if (dragClipId === null || dragClipId === targetClipId) return;
-  // Reorder: move all segments of dragClipId before targetClipId
-  const dragged = allSegments.filter(s => s.clip_id === dragClipId);
-  const rest = allSegments.filter(s => s.clip_id !== dragClipId);
-  const insertIdx = rest.findIndex(s => s.clip_id === targetClipId);
-  rest.splice(insertIdx, 0, ...dragged);
-  allSegments = rest;
-  dragClipId = null;
-  renderEditor();
-  renderTimeline();
-}
-
-// ── KEYBOARD ──
-document.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedSegIds.size > 0) {
-    e.preventDefault();
-    batchSetSelected(false);
-  }
-  if (e.key === 'a' && (e.metaKey || e.ctrlKey)) {
-    e.preventDefault();
-    allSegments.forEach(s => selectedSegIds.add(s.id));
-    renderEditor();
-  }
-  if (e.key === 'i' && selectedSegIds.size > 0) batchSetSelected(true);
-  if (e.key === 'x' && selectedSegIds.size > 0) batchSetSelected(false);
 });
 
-// ── STATS ──
-function updateStats() {
-  const included = allSegments.filter(s => s.included);
-  const totalDur = included.reduce((a, s) => a + (s.end_time - s.start_time), 0);
-  const wordCount = included.reduce((a, s) => a + s.text.split(/\s+/).filter(Boolean).length, 0);
-
-  document.getElementById('statDuration').textContent = fmtTC(totalDur);
-  document.getElementById('statWords').textContent = wordCount.toLocaleString();
-  document.getElementById('statSegments').textContent = `${included.length} / ${allSegments.length}`;
-  document.getElementById('timelineDuration').textContent = fmtTC(totalDur);
-
-  // Clips list
-  const byClip = {};
-  for (const s of included) {
-    if (!byClip[s.clip_id]) byClip[s.clip_id] = { filename: s.filename, dur: 0 };
-    byClip[s.clip_id].dur += s.end_time - s.start_time;
-  }
-  const cl = document.getElementById('clipsList');
-  cl.innerHTML = Object.entries(byClip).map(([id, c]) =>
-    `<div class="clips-list-item"><div class="clips-list-dot" style="background:${clipColors[id]||'#666'}"></div>${c.filename}<span style="margin-left:auto;color:var(--text2)">${fmtTC(c.dur)}</span></div>`
-  ).join('') || '<div style="font-size:12px;color:var(--text3)">No clips included</div>';
-}
-
-// ── MINI TIMELINE ──
-function renderTimeline() {
-  const bar = document.getElementById('timelineBar');
-  const totalDur = allSegments.reduce((a, s) => a + (s.end_time - s.start_time), 0);
-  if (totalDur === 0) { bar.innerHTML = ''; return; }
-
-  let html = '';
-  let pos = 0;
-  for (const s of allSegments) {
-    const dur = s.end_time - s.start_time;
-    const left = (pos / totalDur * 100);
-    const width = (dur / totalDur * 100);
-    const exc = s.included ? '' : ' excluded';
-    html += `<div class="timeline-block${exc}" style="left:${left}%;width:${width}%;background:${s.clip_color}" title="${s.filename} ${fmtTC(s.start_time)}"></div>`;
-    pos += dur;
-  }
-  bar.innerHTML = html;
-}
-
-// ── TRANSCRIBE ──
-async function transcribeAll() {
-  const btn = document.getElementById('btnTranscribe');
-  btn.textContent = '⏳ Transcribing...';
+async function generateScript() {
+  if (S.selectedClips.size === 0) { toast('Select at least one clip', 'error'); return; }
+  const btn = $('#generateBtn');
   btn.disabled = true;
-  showLoading(true);
-
+  btn.innerHTML = '<span class="spinner"></span> Generating…';
   try {
-    // Try whisper first (works without Resolve)
-    await api('transcribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({method:'whisper'}) });
-    toast('Transcription started — this may take a few minutes');
-    // Poll progress
-    pollTranscription();
-  } catch(e) {
-    toast('Transcription failed: ' + e.message, true);
-    btn.textContent = 'Transcribe All';
-    btn.disabled = false;
-    showLoading(false);
-  }
-}
-
-async function pollTranscription() {
-  const btn = document.getElementById('btnTranscribe');
-  const check = async () => {
-    const p = await api('transcribe/progress');
-    if (p.running) {
-      btn.textContent = `⏳ ${p.done}/${p.total}`;
-      setTimeout(check, 3000);
-    } else {
-      btn.textContent = 'Transcribe All';
-      btn.disabled = false;
-      showLoading(false);
-      await loadTranscripts();
-      renderEditor();
-      updateStats();
-      renderTimeline();
-      toast('Transcription complete!');
-    }
-  };
-  setTimeout(check, 3000);
-}
-
-// ── FILLER WORDS ──
-function removeFillerWords() {
-  let count = 0;
-  for (const s of allSegments) {
-    if (s.included && isFillerSegment(s.text)) {
-      s.included = false;
-      count++;
-    }
-  }
-  renderEditor();
-  updateStats();
-  renderTimeline();
-  toast(`Removed ${count} filler word segments`);
-}
-
-function removeSilences() {
-  let count = 0;
-  for (const s of allSegments) {
-    if (s.included && s.text.trim().length === 0) {
-      s.included = false;
-      count++;
-    }
-  }
-  renderEditor();
-  updateStats();
-  renderTimeline();
-  toast(`Removed ${count} silent segments`);
-}
-
-// ── AI ──
-function showAIModal() { document.getElementById('aiModal').classList.add('show'); }
-function closeAIModal() { document.getElementById('aiModal').classList.remove('show'); }
-
-async function runAIGenerate() {
-  closeAIModal();
-  showLoading(true);
-  toast('AI is generating your edit...');
-  try {
-    const result = await api('ai/auto-edit', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        target_duration: parseInt(document.getElementById('aiDuration').value),
-        style: document.getElementById('aiStyle').value,
-        script_id: currentScriptId
-      })
+    const result = await apiPost('/ai/auto-edit', {
+      clip_ids: [...S.selectedClips],
+      target_duration: S.targetDuration || 9999,
+      style: $('#styleSelect').value,
+      prompt: $('#promptInput').value || ''
     });
-    if (result.error) { toast(result.error, true); showLoading(false); return; }
-    currentScriptId = result.script_id;
-    // Apply AI decisions to segments
-    if (result.sections) {
-      applyAISections(result.sections);
+    if (result.error) { toast(result.error, 'error'); return; }
+    toast(`Script created: ${result.script_name}`, 'success');
+    await loadScriptsList();
+    if (result.script_id) {
+      $('#scriptSelect').value = result.script_id;
+      loadScript(result.script_id);
     }
-    showLoading(false);
-    toast(`AI generated ${result.section_count} sections`);
-  } catch(e) {
-    toast('AI generation failed', true);
-    showLoading(false);
-  }
+  } catch(e) { toast('Generation failed: ' + e.message, 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = '✨ Generate with AI'; }
 }
 
-function applyAISections(sections) {
-  // Mark all as excluded first
-  allSegments.forEach(s => s.included = false);
-  // Include segments that fall within AI sections
-  for (const sec of sections) {
-    for (const s of allSegments) {
-      if (s.clip_id === sec.clip_id && s.start_time >= sec.start_time - 0.5 && s.end_time <= sec.end_time + 0.5) {
-        s.included = true;
-      }
-    }
-  }
-  renderEditor();
-  updateStats();
-  renderTimeline();
-}
-
-async function aiTighten() {
-  showLoading(true);
-  toast('AI is tightening your edit...');
+async function loadScriptsList() {
   try {
-    const included = allSegments.filter(s => s.included);
-    const text = included.map(s => `[${s.id}] ${s.text}`).join('\n');
-    const result = await api('ai/brainstorm', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ prompt: `Given this transcript, identify segment IDs that are redundant, repetitive, or could be cut to make the edit tighter and more engaging. Return ONLY a JSON array of segment IDs to REMOVE. Transcript:\n${text}` })
-    });
-    if (result.suggestions) {
-      try {
-        const match = result.suggestions.match(/\[[\d,\s]+\]/);
-        if (match) {
-          const removeIds = new Set(JSON.parse(match[0]));
-          let removed = 0;
-          for (const s of allSegments) {
-            if (removeIds.has(s.id)) { s.included = false; removed++; }
-          }
-          renderEditor(); updateStats(); renderTimeline();
-          toast(`AI removed ${removed} redundant segments`);
-        }
-      } catch(e) { toast('AI response unclear — try again', true); }
-    }
-  } catch(e) { toast('Tighten failed', true); }
-  showLoading(false);
+    S.scripts = await api('/scripts');
+    $('#scriptCount').textContent = S.scripts.length;
+    const sel = $('#scriptSelect');
+    const curVal = sel.value;
+    sel.innerHTML = '<option value="">— Select a script —</option>' +
+      S.scripts.map(s => `<option value="${s.id}">${escHtml(s.name)} (${fmtDurLong(s.target_duration_seconds)})</option>`).join('');
+    if (curVal) sel.value = curVal;
+  } catch(e) {}
 }
 
-// ── EXPORT ──
+async function loadScript(id) {
+  if (!id) { renderScriptEmpty(); return; }
+  try {
+    const data = await api(`/script/${id}`);
+    S.currentScript = id;
+    S.currentScriptData = data;
+    renderScript(data);
+  } catch(e) { toast('Failed to load script', 'error'); }
+}
+
+function renderScriptEmpty() {
+  S.currentScript = null;
+  S.currentScriptData = null;
+  $('#scriptDoc').innerHTML = `<div class="script-empty"><h3>No script loaded</h3><p>Select clips and generate with AI, or choose an existing script above.</p></div>`;
+  $('#scriptActions').style.display = 'none';
+}
+
+function renderScript(data) {
+  const script = data.script;
+  const segments = data.segments || [];
+  const totalDur = segments.reduce((a, s) => a + ((s.end_time||0) - (s.start_time||0)), 0);
+  const inner = $('#scriptDoc');
+
+  inner.innerHTML = `<div class="script-doc-inner">
+    <div class="script-title">${escHtml(script.name)}</div>
+    <div class="script-subtitle">${escHtml(script.description || '')} · Target: ${fmtDurLong(script.target_duration_seconds)}</div>
+    ${segments.map((seg, i) => `
+      <div class="script-section" data-idx="${i}">
+        <div class="script-section-header">
+          <div class="script-section-name" contenteditable="true" onblur="updateSectionName(${i},this.textContent)">${escHtml(seg.section_name || `Section ${i+1}`)}</div>
+          <div class="script-section-dur">${fmtDur((seg.end_time||0)-(seg.start_time||0))}</div>
+        </div>
+        <div class="script-section-body">
+          <div class="script-clip-ref">${escHtml(seg.filename || '?')} [${fmtDur(seg.start_time)} → ${fmtDur(seg.end_time)}]</div>
+          <div class="script-section-text">${escHtml(seg.transcript_text || seg.notes || '')}</div>
+        </div>
+        <div class="script-section-controls">
+          ${i > 0 ? `<button class="btn btn-ghost btn-sm" onclick="moveSection(${i},-1)">↑</button>` : ''}
+          ${i < segments.length-1 ? `<button class="btn btn-ghost btn-sm" onclick="moveSection(${i},1)">↓</button>` : ''}
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost btn-sm" style="color:var(--accent)" onclick="removeSection(${i})">Remove</button>
+        </div>
+      </div>
+    `).join('')}
+    <div class="script-total">Total: <strong>${fmtDurLong(totalDur)}</strong></div>
+  </div>`;
+  $('#scriptActions').style.display = 'flex';
+}
+
+async function updateSectionName(idx, name) {
+  if (!S.currentScriptData) return;
+  S.currentScriptData.segments[idx].section_name = name;
+  await saveSegments();
+}
+
+async function moveSection(idx, dir) {
+  if (!S.currentScriptData) return;
+  const segs = S.currentScriptData.segments;
+  const target = idx + dir;
+  if (target < 0 || target >= segs.length) return;
+  [segs[idx], segs[target]] = [segs[target], segs[idx]];
+  segs.forEach((s, i) => s.order_index = i);
+  await saveSegments();
+  renderScript(S.currentScriptData);
+}
+
+async function removeSection(idx) {
+  if (!S.currentScriptData) return;
+  S.currentScriptData.segments.splice(idx, 1);
+  S.currentScriptData.segments.forEach((s, i) => s.order_index = i);
+  await saveSegments();
+  renderScript(S.currentScriptData);
+}
+
+async function saveSegments() {
+  if (!S.currentScript || !S.currentScriptData) return;
+  try {
+    await apiPost(`/script/${S.currentScript}/update-segments`, {
+      segments: S.currentScriptData.segments.map((s, i) => ({
+        clip_id: s.clip_id, start_time: s.start_time, end_time: s.end_time,
+        section_name: s.section_name, order_index: i, notes: s.notes || '', transition: s.transition || 'cut'
+      }))
+    });
+  } catch(e) {}
+}
+
+async function deleteScript() {
+  if (!S.currentScript) return;
+  if (!confirm('Delete this script?')) return;
+  await api(`/script/${S.currentScript}`, {method:'DELETE'});
+  toast('Script deleted', 'info');
+  renderScriptEmpty();
+  loadScriptsList();
+}
+
+async function duplicateScript() {
+  if (!S.currentScriptData) return;
+  const script = S.currentScriptData.script;
+  const res = await apiPost('/scripts', { name: script.name + ' (copy)', description: script.description, target_duration: script.target_duration_seconds });
+  if (res.id) {
+    await apiPost(`/script/${res.id}/update-segments`, {
+      segments: S.currentScriptData.segments.map((s, i) => ({
+        clip_id: s.clip_id, start_time: s.start_time, end_time: s.end_time,
+        section_name: s.section_name, order_index: i, notes: s.notes || '', transition: s.transition || 'cut'
+      }))
+    });
+    toast('Script duplicated', 'success');
+    await loadScriptsList();
+    $('#scriptSelect').value = res.id;
+    loadScript(res.id);
+  }
+}
+
+// ── TIMELINE TAB ──
+function openInTimeline() {
+  if (!S.currentScriptData) return;
+  S.timelineScript = S.currentScriptData;
+  S.timelineSegmentIndex = 0;
+  switchTab('timeline');
+}
+
+function renderTimeline() {
+  const data = S.timelineScript;
+  if (!data) {
+    $('#timelineScriptPanel').innerHTML = '<div style="padding:40px;color:var(--text3);text-align:center">No script loaded. Go to Scripts tab first.</div>';
+    $('#filmstrip').innerHTML = '';
+    return;
+  }
+  const script = data.script;
+  const segments = data.segments || [];
+  const totalDur = segments.reduce((a, s) => a + ((s.end_time||0) - (s.start_time||0)), 0);
+
+  $('#timelineTitle').textContent = script.name;
+  $('#timelineDuration').textContent = fmtDurLong(totalDur);
+
+  // Script panel
+  let lastSection = '';
+  let html = '';
+  segments.forEach((seg, i) => {
+    if (seg.section_name && seg.section_name !== lastSection) {
+      html += `<div class="tl-section-header">${escHtml(seg.section_name)}</div>`;
+      lastSection = seg.section_name;
+    }
+    html += `
+      <div class="tl-segment ${i === S.timelineSegmentIndex ? 'active' : ''}" onclick="selectTimelineSegment(${i})">
+        <img class="tl-segment-thumb" src="/api/thumbnails/${seg.clip_id}" onerror="this.style.background='var(--surface2)'">
+        <div class="tl-segment-content">
+          <div class="tl-segment-speaker">${escHtml(seg.filename || '')}</div>
+          <div class="tl-segment-text">${escHtml(seg.transcript_text || seg.notes || '…')}</div>
+        </div>
+        <div class="tl-segment-tc">${fmtDur(seg.start_time)}</div>
+      </div>
+    `;
+  });
+  $('#timelineScriptPanel').innerHTML = html;
+
+  // Filmstrip
+  const maxDur = Math.max(...segments.map(s => (s.end_time||0)-(s.start_time||0)), 1);
+  $('#filmstrip').innerHTML = segments.map((seg, i) => {
+    const dur = (seg.end_time||0) - (seg.start_time||0);
+    const w = Math.max(80, Math.round((dur / maxDur) * 200));
+    return `
+      <div class="filmstrip-block ${i === S.timelineSegmentIndex ? 'active' : ''}" style="min-width:${w}px;border-left:3px solid ${clipColor(seg.clip_id)}" onclick="selectTimelineSegment(${i})">
+        <img class="filmstrip-thumb" src="/api/thumbnails/${seg.clip_id}" onerror="this.style.background='var(--bg)'">
+        <div class="filmstrip-text">${escHtml((seg.transcript_text || seg.notes || '').slice(0,30))}</div>
+        <div class="filmstrip-dur">${fmtDur(dur)}</div>
+      </div>
+    `;
+  }).join('') + `<div class="filmstrip-total">${fmtDurLong(totalDur)}</div>`;
+
+  // Preview
+  if (segments.length) selectTimelineSegment(S.timelineSegmentIndex);
+}
+
+function selectTimelineSegment(idx) {
+  const data = S.timelineScript;
+  if (!data || !data.segments) return;
+  S.timelineSegmentIndex = idx;
+  const seg = data.segments[idx];
+  if (!seg) return;
+
+  // Update active states
+  $$('.tl-segment').forEach((el, i) => el.classList.toggle('active', i === idx));
+  $$('.filmstrip-block').forEach((el, i) => el.classList.toggle('active', i === idx));
+
+  // Scroll active segment into view
+  const activeEl = $$('.tl-segment')[idx];
+  if (activeEl) activeEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  const activeFilm = $$('.filmstrip-block')[idx];
+  if (activeFilm) activeFilm.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+
+  // Preview
+  $('#previewFrame').innerHTML = `<img src="/api/thumbnails/${seg.clip_id}" onerror="this.parentElement.innerHTML='<div class=preview-placeholder>No thumbnail</div>'">`;
+  $('#previewInfo').innerHTML = `
+    <div class="preview-clip-name">${escHtml(seg.filename || '—')}</div>
+    <div class="preview-clip-tc">${fmtDur(seg.start_time)} → ${fmtDur(seg.end_time)}</div>
+  `;
+  const dur = (seg.end_time||0) - (seg.start_time||0);
+  $('#previewSegmentInfo').textContent = `${seg.section_name || ''} · ${fmtDurLong(dur)} · Segment ${idx+1} of ${data.segments.length}`;
+}
+
+function prevSegment() {
+  if (S.timelineSegmentIndex > 0) selectTimelineSegment(S.timelineSegmentIndex - 1);
+}
+function nextSegment() {
+  const segs = S.timelineScript?.segments;
+  if (segs && S.timelineSegmentIndex < segs.length - 1) selectTimelineSegment(S.timelineSegmentIndex + 1);
+}
+
 async function sendToResolve() {
-  const included = allSegments.filter(s => s.included);
-  if (included.length === 0) { toast('No segments to export', true); return; }
-
-  showLoading(true);
+  if (!S.timelineScript) return;
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Sending…';
   try {
-    // Create/update script with current segments
-    if (!currentScriptId) {
-      const r = await api('scripts', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ name: 'ResolveFlow Edit ' + new Date().toLocaleDateString() })
-      });
-      currentScriptId = r.id;
-    }
-
-    // Update script segments via new endpoint
-    await api(`script/${currentScriptId}/update-segments`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ segments: buildExportSegments() })
-    });
-
-    // Export to Resolve
-    const result = await api(`export/resolve/${currentScriptId}`, { method: 'POST' });
-    if (result.error) { toast(result.error, true); }
-    else { toast(`✅ Sent to Resolve: "${result.timeline_name}" (${result.segments_added} clips)`); }
-  } catch(e) { toast('Export failed: ' + e.message, true); }
-  showLoading(false);
-}
-
-function buildExportSegments() {
-  const included = allSegments.filter(s => s.included);
-  // Group consecutive same-clip segments
-  const groups = [];
-  for (const s of included) {
-    const last = groups[groups.length - 1];
-    if (last && last.clip_id === s.clip_id && Math.abs(s.start_time - last.end_time) < 0.5) {
-      last.end_time = s.end_time;
-      last.text += ' ' + s.text;
-    } else {
-      groups.push({ clip_id: s.clip_id, start_time: s.start_time, end_time: s.end_time, text: s.text, section_name: s.filename });
-    }
-  }
-  return groups.map((g, i) => ({
-    clip_id: g.clip_id,
-    start_time: g.start_time,
-    end_time: g.end_time,
-    section_name: g.section_name,
-    order_index: i
-  }));
+    const res = await apiPost(`/export/resolve/${S.timelineScript.script.id}`, {});
+    if (res.error) { toast(res.error, 'error'); }
+    else toast(`Timeline "${res.timeline_name}" created — ${res.segments_added} segments`, 'success');
+  } catch(e) { toast('Export failed: ' + e.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = '🎬 Send to Resolve'; }
 }
 
 async function exportEDL() {
-  if (!currentScriptId) {
-    // Create script first
-    const r = await api('scripts', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name: 'ResolveFlow Edit' })
-    });
-    currentScriptId = r.id;
-    await api(`script/${currentScriptId}/update-segments`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ segments: buildExportSegments() })
-    });
-  }
-  window.open(`/api/export/edl/${currentScriptId}`, '_blank');
+  if (!S.timelineScript) return;
+  try {
+    const r = await fetch(`/api/export/edl/${S.timelineScript.script.id}`, {method:'POST'});
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `script_${S.timelineScript.script.id}.edl`;
+    a.click();
+    toast('EDL downloaded', 'success');
+  } catch(e) { toast('EDL export failed', 'error'); }
 }
 
-function exportText() {
-  const included = allSegments.filter(s => s.included);
-  const text = included.map(s => s.text).join('\n');
-  const blob = new Blob([text], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'resolveflow-script.txt';
-  a.click();
+// ── Actions ──
+async function doIngest() {
+  toast('Rescanning…', 'info');
+  await apiPost('/ingest', {});
+  await loadAll();
+  toast('Rescan complete', 'success');
 }
 
-// ── UI HELPERS ──
-function toast(msg, isError) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (isError ? ' error' : '');
-  setTimeout(() => t.className = 'toast', 3000);
+async function doTranscribe() {
+  const btn = $('#transcribeBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Starting…';
+  try {
+    const res = await apiPost('/transcribe', {method: 'whisper'});
+    toast(`Transcription started (${res.method})`, 'info');
+    pollTranscription();
+  } catch(e) { toast('Transcription failed: ' + e.message, 'error'); btn.disabled = false; btn.textContent = 'Transcribe All'; }
 }
 
-function showLoading(on) {
-  document.getElementById('loadingBar').className = 'loading-bar' + (on ? ' active' : '');
+function pollTranscription() {
+  const poll = async () => {
+    try {
+      const p = await api('/transcribe/progress');
+      const btn = $('#transcribeBtn');
+      if (p.running) {
+        btn.innerHTML = `<span class="spinner"></span> ${p.done}/${p.total} ${p.current||''}`;
+        setTimeout(poll, 2000);
+      } else {
+        btn.disabled = false; btn.textContent = 'Transcribe All';
+        await loadAll();
+        toast('Transcription complete', 'success');
+      }
+    } catch(e) { setTimeout(poll, 3000); }
+  };
+  setTimeout(poll, 2000);
 }
 
-// ── START ──
-init();
-// Refresh Resolve status every 30s
-setInterval(checkResolve, 30000);
+// ── Init ──
+loadAll();
+
+// Also load transcript text for script segments (the API may not include it)
+// We'll enrich script data with transcript text when loading scripts
+const _origLoadScript = loadScript;
+loadScript = async function(id) {
+  if (!id) { renderScriptEmpty(); return; }
+  try {
+    const data = await api(`/script/${id}`);
+    // Enrich segments with transcript text
+    for (const seg of (data.segments || [])) {
+      if (!seg.transcript_text && seg.clip_id) {
+        try {
+          if (!S.transcripts[seg.clip_id]) {
+            S.transcripts[seg.clip_id] = await api(`/transcript/${seg.clip_id}`);
+          }
+          const t = S.transcripts[seg.clip_id];
+          if (t && t.segments) {
+            const matching = t.segments.filter(ts =>
+              ts.start >= (seg.start_time - 0.5) && ts.end <= (seg.end_time + 0.5)
+            );
+            seg.transcript_text = matching.map(m => m.text).join(' ') || '';
+          }
+        } catch(e) {}
+      }
+    }
+    S.currentScript = id;
+    S.currentScriptData = data;
+    renderScript(data);
+  } catch(e) { toast('Failed to load script', 'error'); }
+};
 </script>
 </body>
 </html>
