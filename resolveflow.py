@@ -687,6 +687,9 @@ Return ONLY a JSON object (no markdown) with this structure:
         edit_plan = json.loads(cleaned)
         sections = edit_plan.get('sections', [])
         
+        # Build set of valid clip IDs
+        valid_ids = {c['id'] for c in all_clips}
+        
         # Clear existing segments and replace with refined ones
         conn = db.get_db(DB_PATH)
         conn.execute("DELETE FROM script_segments WHERE script_id=?", (script_id,))
@@ -696,9 +699,12 @@ Return ONLY a JSON object (no markdown) with this structure:
         
         for i, sec in enumerate(sections):
             clip_id = sec.get('clip_id')
-            if not clip_id and sec.get('clip_filename'):
-                clip_id = fname_to_id.get(sec['clip_filename'])
-            if not clip_id:
+            # Always try filename lookup (more reliable than AI-guessed IDs)
+            if sec.get('clip_filename'):
+                fname_id = fname_to_id.get(sec['clip_filename'])
+                if fname_id:
+                    clip_id = fname_id
+            if not clip_id or clip_id not in valid_ids:
                 continue
             db.add_script_segment(DB_PATH, script_id, clip_id,
                 sec.get('start_time', 0), sec.get('end_time', 10),

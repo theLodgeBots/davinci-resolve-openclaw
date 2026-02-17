@@ -709,8 +709,14 @@ function renderScript(data) {
     const color = SEG_COLORS[i % SEG_COLORS.length];
     const text = seg.transcript_text || '';
     if (text.trim()) {
+      // Wrap each word in a span for selection/removal
+      const words = text.split(/(\s+)/);
+      const wordHtml = words.map((w, wi) => {
+        if (/^\s+$/.test(w)) return w;
+        return `<span class="script-word" data-seg="${i}" data-wi="${wi}" onclick="toggleWord(this)" style="cursor:pointer;border-radius:2px;padding:0 1px;transition:all .15s">${escHtml(w)}</span>`;
+      }).join('');
       html += `<div id="seg-text-${i}" style="margin-bottom:16px;padding:16px 20px;background:var(--doc-bg, #1e2235);border-radius:8px;border-left:3px solid ${color}">
-        <p style="font-size:15px;line-height:1.8;color:var(--text);margin:0">${escHtml(text)}</p>
+        <p style="font-size:15px;line-height:1.8;color:var(--text);margin:0">${wordHtml}</p>
       </div>`;
     }
   });
@@ -725,6 +731,40 @@ function scrollToSegText(idx) {
   const el = document.getElementById('seg-text-' + idx);
   if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
 }
+
+function toggleWord(el) {
+  el.classList.toggle('word-cut');
+  if (el.classList.contains('word-cut')) {
+    el.style.textDecoration = 'line-through';
+    el.style.opacity = '0.3';
+    el.style.background = 'rgba(233,69,96,0.15)';
+  } else {
+    el.style.textDecoration = '';
+    el.style.opacity = '';
+    el.style.background = '';
+  }
+}
+
+// Allow drag-select multiple words
+let isDragging = false;
+let dragMode = null; // 'cut' or 'restore'
+document.addEventListener('mousedown', (e) => {
+  if (e.target.classList?.contains('script-word')) {
+    isDragging = true;
+    dragMode = e.target.classList.contains('word-cut') ? 'restore' : 'cut';
+    toggleWord(e.target);
+    e.preventDefault();
+  }
+});
+document.addEventListener('mouseover', (e) => {
+  if (isDragging && e.target.classList?.contains('script-word')) {
+    const isCut = e.target.classList.contains('word-cut');
+    if ((dragMode === 'cut' && !isCut) || (dragMode === 'restore' && isCut)) {
+      toggleWord(e.target);
+    }
+  }
+});
+document.addEventListener('mouseup', () => { isDragging = false; });
 
 function toggleRefine() {
   const p = $('#refinePanel');
