@@ -670,29 +670,31 @@ function renderScript(data) {
   const totalDur = segments.reduce((a, s) => a + ((s.end_time||0) - (s.start_time||0)), 0);
   const inner = $('#scriptDoc');
 
-  inner.innerHTML = `<div class="script-doc-inner">
-    <div class="script-title">${escHtml(script.name)}</div>
-    <div class="script-subtitle">${escHtml(script.description || '')} · Target: ${fmtDurLong(script.target_duration_seconds)}</div>
-    ${segments.map((seg, i) => `
-      <div class="script-section" data-idx="${i}">
-        <div class="script-section-header">
-          <div class="script-section-name" contenteditable="true" onblur="updateSectionName(${i},this.textContent)">${escHtml(seg.section_name || `Section ${i+1}`)}</div>
-          <div class="script-section-dur">${fmtDur((seg.end_time||0)-(seg.start_time||0))}</div>
-        </div>
-        <div class="script-section-body">
-          <div class="script-clip-ref">${escHtml(seg.filename || '?')} [${fmtDur(seg.start_time)} → ${fmtDur(seg.end_time)}]</div>
-          <div class="script-section-text">${escHtml(seg.transcript_text || seg.notes || '')}</div>
-        </div>
-        <div class="script-section-controls">
-          ${i > 0 ? `<button class="btn btn-ghost btn-sm" onclick="moveSection(${i},-1)">↑</button>` : ''}
-          ${i < segments.length-1 ? `<button class="btn btn-ghost btn-sm" onclick="moveSection(${i},1)">↓</button>` : ''}
-          <div style="flex:1"></div>
-          <button class="btn btn-ghost btn-sm" style="color:var(--accent)" onclick="removeSection(${i})">Remove</button>
-        </div>
-      </div>
-    `).join('')}
-    <div class="script-total">Total: <strong>${fmtDurLong(totalDur)}</strong></div>
-  </div>`;
+  // Group consecutive segments by section name for clean reading
+  let html = `<div class="script-doc-inner" style="max-width:720px;margin:0 auto;padding:32px 24px;">
+    <h2 style="font-size:22px;font-weight:700;margin-bottom:4px;color:var(--text)">${escHtml(script.name)}</h2>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:24px">${fmtDurLong(totalDur)} · ${segments.length} segments · ${segments.reduce((a,s) => a + (s.transcript_text||s.notes||'').split(/\s+/).length, 0)} words</p>
+    <hr style="border:none;border-top:1px solid var(--border);margin-bottom:24px">`;
+
+  let lastSection = null;
+  segments.forEach((seg, i) => {
+    const sectionName = seg.section_name || '';
+    if (sectionName && sectionName !== lastSection) {
+      html += `<h3 style="font-size:15px;font-weight:700;color:var(--accent);margin:28px 0 12px;text-transform:uppercase;letter-spacing:0.5px">${escHtml(sectionName)}</h3>`;
+      lastSection = sectionName;
+    }
+    const text = seg.transcript_text || seg.notes || '';
+    if (text.trim()) {
+      html += `<p style="font-size:15px;line-height:1.8;color:var(--text);margin-bottom:12px;cursor:pointer" 
+        onclick="this.classList.toggle('seg-selected')" 
+        title="${escHtml(seg.filename||'')} [${fmtDur(seg.start_time)} → ${fmtDur(seg.end_time)}]">${escHtml(text)}</p>`;
+    }
+  });
+
+  html += `</div>`;
+  inner.innerHTML = html;
+  inner.style.background = 'var(--doc-bg, #1e2235)';
+  inner.style.overflowY = 'auto';
   $('#scriptActions').style.display = 'flex';
 }
 
