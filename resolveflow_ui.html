@@ -695,12 +695,12 @@ function renderScript(data) {
 
   segments.forEach((seg, i) => {
     const color = SEG_COLORS[i % SEG_COLORS.length];
-    const text = seg.transcript_text || seg.notes || '';
-    html += `<div id="seg-text-${i}" style="margin-bottom:20px;padding:16px;background:var(--doc-bg, #1e2235);border-radius:8px;border-left:3px solid ${color}">
-      <div style="font-size:11px;color:${color};font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">${escHtml(seg.section_name || 'Section '+(i+1))}</div>
-      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">${escHtml(seg.filename||'')} [${fmtDur(seg.start_time)} → ${fmtDur(seg.end_time)}]</div>
-      <p style="font-size:15px;line-height:1.8;color:var(--text);margin:0">${escHtml(text) || '<em style="color:var(--text3)">No transcript text for this segment</em>'}</p>
-    </div>`;
+    const text = seg.transcript_text || '';
+    if (text.trim()) {
+      html += `<div id="seg-text-${i}" style="margin-bottom:16px;padding:16px 20px;background:var(--doc-bg, #1e2235);border-radius:8px;border-left:3px solid ${color}">
+        <p style="font-size:15px;line-height:1.8;color:var(--text);margin:0">${escHtml(text)}</p>
+      </div>`;
+    }
   });
 
   html += `</div></div></div>`;
