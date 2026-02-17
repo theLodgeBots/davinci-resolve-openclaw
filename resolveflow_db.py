@@ -222,10 +222,19 @@ def get_script(db_path, script_id):
         """, (seg_dict['clip_id'], seg_dict['start_time'], seg_dict['end_time'])).fetchall()
         if ts:
             seg_dict['transcript_text'] = ' '.join(row['text'] for row in ts)
-        elif seg_dict.get('notes'):
-            seg_dict['transcript_text'] = seg_dict['notes']
         else:
-            seg_dict['transcript_text'] = ''
+            # Try wider search — find closest segments in this clip
+            ts_wide = conn.execute("""
+                SELECT text, start_time, end_time FROM transcript_segments
+                WHERE clip_id=? ORDER BY ABS(start_time - ?) LIMIT 5
+            """, (seg_dict['clip_id'], seg_dict['start_time'])).fetchall()
+            if ts_wide:
+                seg_dict['transcript_text'] = ' '.join(row['text'] for row in ts_wide)
+            else:
+                # Last resort: full clip transcript
+                t = conn.execute("SELECT full_text FROM transcripts WHERE clip_id=?", (seg_dict['clip_id'],)).fetchone()
+                seg_dict['transcript_text'] = t['full_text'] if t else ''
+            # Never show AI notes as transcript text — they're not real speech
         result_segments.append(seg_dict)
     
     conn.close()

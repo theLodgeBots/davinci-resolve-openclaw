@@ -550,7 +550,10 @@ Rules:
 - Ensure smooth flow between sections
 - Each section should have a descriptive section_name
 - Include enough sections to fill the target duration — typically 6-12 sections for a 60 second video
-- Prefer longer segments (8-15 seconds each) over very short ones"""
+- Prefer longer segments (8-15 seconds each) over very short ones
+- ONLY select segments where the speaker is saying something coherent and on-topic. Skip casual chatter, false starts, or behind-the-scenes talk.
+- The "notes" field is for YOUR editing notes — it should describe why you chose this segment, NOT be the script text. The actual transcript text will be pulled from the timecodes you specify.
+- Make sure start_time and end_time precisely match meaningful sentences in the transcript — don't cut mid-sentence"""
 
     try:
         result = ai_request(prompt, temperature=0.5)
