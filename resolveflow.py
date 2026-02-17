@@ -595,9 +595,9 @@ def do_ai_auto_edit(target_duration=120, style="highlight reel", clip_ids=None, 
     all_clips = db.get_all_clips(DB_PATH)
     all_segments = db.get_full_transcript(DB_PATH)
 
-    # Filter to selected clips if specified
-    if clip_ids:
-        clip_id_set = set(clip_ids)
+    # Filter to selected clips if specified (handle "all" string shorthand)
+    if clip_ids and clip_ids != "all" and clip_ids != ["all"]:
+        clip_id_set = set(int(x) if isinstance(x, str) and x.isdigit() else x for x in clip_ids)
         all_clips = [c for c in all_clips if c['id'] in clip_id_set]
         all_segments = [s for s in all_segments if s['clip_id'] in clip_id_set]
 
@@ -673,8 +673,8 @@ CRITICAL RULES:
 6. clip_filename is REQUIRED for each section. Use the exact filenames shown above.
 7. Don't cut mid-sentence. Align start/end to sentence boundaries in the transcript.
 8. Skip clips with only a few words or non-English text.
-9. Each segment MUST be at least 3 seconds long. Prefer 6-15 second segments with complete thoughts.
-10. VERIFY YOUR MATH: Before responding, add up all (end_time - start_time) values. The total MUST be ~{padded_duration}s. If it's under {padded_duration - 10}s, add more sections until you hit the target."""
+9. Each segment MUST be at least 3 seconds long and NO MORE than 20 seconds long. Prefer 6-15 second segments with complete thoughts. If a great section is longer than 20s, split it into two sections.
+10. VERIFY YOUR MATH: Before responding, add up all (end_time - start_time) values. The total MUST be between {padded_duration - 10}s and {padded_duration + 10}s. If under, add more sections. If over, remove or shorten sections."""
 
     try:
         # Try up to 2 times — retry with gpt-4o if first attempt under-plans
@@ -701,8 +701,18 @@ CRITICAL RULES:
                 break  # Good enough
             print(f"  ⚠️ Under-planned ({planned_total:.1f}s vs {padded_duration}s). {'Retrying with gpt-4o...' if attempt == 0 else 'Proceeding anyway.'}", flush=True)
 
-        # Filter out micro-segments (< 2s)
-        sections = [s for s in sections if s.get('end_time', 0) - s.get('start_time', 0) >= 2.0]
+        # Filter out micro-segments (< 2s) and cap long segments at 20s
+        valid_sections = []
+        for s in sections:
+            dur = s.get('end_time', 0) - s.get('start_time', 0)
+            if dur < 2.0:
+                continue
+            if dur > 20.0:
+                # Trim to 20s from start
+                s['end_time'] = s['start_time'] + 20.0
+                print(f"  Capped segment '{s.get('section_name','')}' from {dur:.1f}s to 20.0s", flush=True)
+            valid_sections.append(s)
+        sections = valid_sections
         edit_plan['sections'] = sections
 
         # Create script and segments in DB (or use existing script_id)
