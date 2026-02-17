@@ -664,6 +664,8 @@ function renderScriptEmpty() {
   $('#scriptActions').style.display = 'none';
 }
 
+const SEG_COLORS = ['#e94560','#4ecca3','#e9a645','#a78bfa','#38bdf8','#f472b6','#34d399','#fb923c','#818cf8','#22d3ee'];
+
 function renderScript(data) {
   const script = data.script;
   const segments = data.segments || [];
@@ -679,7 +681,8 @@ function renderScript(data) {
         <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:12px">Outline</h4>`;
 
   segments.forEach((seg, i) => {
-    html += `<div style="padding:8px 10px;margin-bottom:4px;border-radius:6px;cursor:pointer;border-left:3px solid var(--accent);background:var(--surface);font-size:12px" onclick="scrollToSegText(${i})">
+    const color = SEG_COLORS[i % SEG_COLORS.length];
+    html += `<div style="padding:8px 10px;margin-bottom:4px;border-radius:6px;cursor:pointer;border-left:3px solid ${color};background:var(--surface);font-size:12px" onclick="scrollToSegText(${i})">
       <div style="font-weight:600;color:var(--text);margin-bottom:2px">${escHtml(seg.section_name || 'Section '+(i+1))}</div>
       <div style="color:var(--text3)">${escHtml(seg.filename||'')} · ${fmtDur(seg.start_time)}→${fmtDur(seg.end_time)}</div>
     </div>`;
@@ -691,9 +694,10 @@ function renderScript(data) {
         <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:12px">Full Script</h4>`;
 
   segments.forEach((seg, i) => {
+    const color = SEG_COLORS[i % SEG_COLORS.length];
     const text = seg.transcript_text || seg.notes || '';
-    html += `<div id="seg-text-${i}" style="margin-bottom:20px;padding:16px;background:var(--doc-bg, #1e2235);border-radius:8px;border-left:3px solid var(--accent)">
-      <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">${escHtml(seg.section_name || 'Section '+(i+1))}</div>
+    html += `<div id="seg-text-${i}" style="margin-bottom:20px;padding:16px;background:var(--doc-bg, #1e2235);border-radius:8px;border-left:3px solid ${color}">
+      <div style="font-size:11px;color:${color};font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">${escHtml(seg.section_name || 'Section '+(i+1))}</div>
       <div style="font-size:10px;color:var(--text3);margin-bottom:8px">${escHtml(seg.filename||'')} [${fmtDur(seg.start_time)} → ${fmtDur(seg.end_time)}]</div>
       <p style="font-size:15px;line-height:1.8;color:var(--text);margin:0">${escHtml(text) || '<em style="color:var(--text3)">No transcript text for this segment</em>'}</p>
     </div>`;

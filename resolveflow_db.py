@@ -214,6 +214,7 @@ def get_script(db_path, script_id):
     for seg in segments:
         seg_dict = dict(seg)
         # Find transcript segments that overlap with this script segment's time range
+        # Only include text that falls within the edit's in/out points
         ts = conn.execute("""
             SELECT text, start_time, end_time FROM transcript_segments
             WHERE clip_id=? AND end_time > ? AND start_time < ?
@@ -221,10 +222,10 @@ def get_script(db_path, script_id):
         """, (seg_dict['clip_id'], seg_dict['start_time'], seg_dict['end_time'])).fetchall()
         if ts:
             seg_dict['transcript_text'] = ' '.join(row['text'] for row in ts)
+        elif seg_dict.get('notes'):
+            seg_dict['transcript_text'] = seg_dict['notes']
         else:
-            # Fallback: get full clip transcript
-            t = conn.execute("SELECT full_text FROM transcripts WHERE clip_id=?", (seg_dict['clip_id'],)).fetchone()
-            seg_dict['transcript_text'] = t['full_text'] if t else seg_dict.get('notes', '')
+            seg_dict['transcript_text'] = ''
         result_segments.append(seg_dict)
     
     conn.close()
