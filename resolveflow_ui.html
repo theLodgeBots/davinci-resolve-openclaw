@@ -324,6 +324,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
         <button class="btn btn-accent btn-sm" onclick="showNewScriptModal()">+ New Script</button>
         <button class="btn btn-secondary btn-sm" onclick="duplicateScript()">Duplicate</button>
         <button class="btn btn-secondary btn-sm" style="color:var(--accent)" onclick="deleteScript()">Delete</button>
+        <button class="btn btn-secondary btn-sm" style="color:#f44" onclick="deleteAllScripts()">Delete All</button>
       </div>
       <div class="script-doc" id="scriptDoc">
         <div class="script-empty">
@@ -993,6 +994,17 @@ async function deleteScript() {
   if (!confirm('Delete this script?')) return;
   await api(`/script/${S.currentScript}`, {method:'DELETE'});
   toast('Script deleted', 'info');
+  renderScriptEmpty();
+  loadScriptsList();
+}
+
+async function deleteAllScripts() {
+  if (!S.scripts || S.scripts.length === 0) { toast('No scripts to delete', 'info'); return; }
+  if (!confirm(`Delete ALL ${S.scripts.length} scripts? This cannot be undone.`)) return;
+  for (const s of S.scripts) {
+    await api(`/script/${s.id}`, {method:'DELETE'});
+  }
+  toast(`Deleted ${S.scripts.length} scripts`, 'info');
   renderScriptEmpty();
   loadScriptsList();
 }
