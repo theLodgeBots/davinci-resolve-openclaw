@@ -60,7 +60,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .tab-btn .tab-count{font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2);padding:1px 6px;border-radius:8px;margin-left:6px}
 
 /* Tab content */
-.tab-content{flex:1;overflow:hidden;display:none}
+.tab-content{flex:1;overflow:hidden;display:none;min-height:0}
 .tab-content.active{display:flex;flex-direction:column}
 
 /* ═══ TAB 1: CLIPS ═══ */
@@ -108,11 +108,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .no-transcript-msg{color:var(--text3);font-size:13px;font-style:italic}
 
 /* ═══ TAB 2: SCRIPTS ═══ */
-.scripts-layout{flex:1;display:flex;overflow:hidden}
+.scripts-layout{flex:1;display:flex;overflow:hidden;min-height:0}
 .scripts-left{width:420px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
 .scripts-left-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0}
 .scripts-left-header h3{font-size:14px;font-weight:700;flex:1}
-.clip-selector{flex:1;overflow-y:auto;padding:8px 0}
+.clip-selector{flex:1;overflow-y:auto;padding:8px 0;min-height:0}
 .clip-select-item{display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;transition:background var(--transition)}
 .clip-select-item:hover{background:var(--surface2)}
 .clip-select-item input[type="checkbox"]{accent-color:var(--accent);width:16px;height:16px;flex-shrink:0}
@@ -124,7 +124,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .selection-summary strong{color:var(--text)}
 
 /* Create script form */
-.create-script-form{padding:20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface2)}
+.create-script-form{padding:20px;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface2);overflow-y:auto}
 .form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.3px}
 .form-group{margin-bottom:14px}
 .form-group input,.form-group select,.form-group textarea{width:100%;font-size:13px}
@@ -136,7 +136,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .ai-note{font-size:11px;color:var(--text3);font-style:italic;margin-top:8px;line-height:1.4}
 
 /* Scripts right panel */
-.scripts-right{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.scripts-right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
 .scripts-right-header{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
 .scripts-right-header select{font-size:13px;flex:1;max-width:300px}
 .script-doc{flex:1;overflow-y:auto;padding:32px}
@@ -227,6 +227,33 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 </head>
 <body>
 
+<!-- ═══ FOLDER PICKER (shown when no project is open) ═══ -->
+<div id="folderPicker" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:center">
+  <div style="width:100%;max-width:640px;padding:32px">
+    <div style="text-align:center;margin-bottom:40px">
+      <div style="font-size:32px;font-weight:800;color:var(--accent);margin-bottom:8px">ResolveFlow</div>
+      <div style="color:var(--text2);font-size:15px">Open a folder with video files to get started</div>
+    </div>
+    <!-- Recent projects -->
+    <div id="recentProjects" style="margin-bottom:32px"></div>
+    <!-- Folder browser -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden">
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2)">
+        <button class="btn btn-ghost btn-sm" id="browseUp" onclick="browseUp()" title="Go up">↑</button>
+        <input type="text" id="browsePath" style="flex:1;font-size:13px;font-family:monospace" onkeydown="if(event.key==='Enter')browseTo(this.value)">
+        <button class="btn btn-accent btn-sm" id="openFolderBtn" onclick="openCurrentFolder()" style="display:none">Open This Folder</button>
+      </div>
+      <div id="browseList" style="max-height:400px;overflow-y:auto"></div>
+    </div>
+    <div style="text-align:center;margin-top:16px;color:var(--text3);font-size:12px">
+      Folders with video files are highlighted in <span style="color:var(--green)">green</span>
+    </div>
+  </div>
+</div>
+
+<!-- App (hidden until project is open) -->
+<div id="appMain" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+
 <!-- Header -->
 <div class="header">
   <div class="logo">ResolveFlow</div>
@@ -288,46 +315,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
       <div class="selection-summary" id="selectionSummary">
         <strong>0</strong> clips selected · <span>0:00</span> total
       </div>
-      <div class="create-script-form">
-        <div class="form-group">
-          <label class="form-label">Script Name</label>
-          <input type="text" id="scriptNameInput" placeholder="My Edit">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Target Duration</label>
-          <div class="duration-presets" id="durPresets">
-            <button class="dur-btn" data-dur="30">30s</button>
-            <button class="dur-btn" data-dur="60">1min</button>
-            <button class="dur-btn active" data-dur="120">2min</button>
-            <button class="dur-btn" data-dur="300">5min</button>
-            <button class="dur-btn" data-dur="600">10min</button>
-            <button class="dur-btn" data-dur="0">Full</button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Style</label>
-          <select id="styleSelect">
-            <option>Highlight Reel</option>
-            <option>Documentary</option>
-            <option>Interview</option>
-            <option>Social Media</option>
-            <option>Tutorial</option>
-            <option>Custom</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Instructions</label>
-          <textarea id="promptInput" placeholder="What should this video be about? What's the story?" rows="3"></textarea>
-        </div>
-        <button class="btn btn-accent btn-lg" style="width:100%" id="generateBtn" onclick="generateScript()">✨ Generate with AI</button>
-        <div class="ai-note">AI will arrange and trim existing clips — it cannot create new dialog.</div>
-      </div>
     </div>
     <div class="scripts-right">
       <div class="scripts-right-header">
         <select id="scriptSelect" onchange="loadScript(this.value)">
           <option value="">— Select a script —</option>
         </select>
+        <button class="btn btn-accent btn-sm" onclick="showNewScriptModal()">+ New Script</button>
         <button class="btn btn-secondary btn-sm" onclick="duplicateScript()">Duplicate</button>
         <button class="btn btn-secondary btn-sm" style="color:var(--accent)" onclick="deleteScript()">Delete</button>
       </div>
@@ -361,7 +355,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 <div class="tab-content" id="tab-timeline">
   <div class="timeline-header">
     <button class="btn btn-ghost btn-sm" onclick="switchTab('scripts')">← Scripts</button>
-    <h3 id="timelineTitle">No script loaded</h3>
+    <h3 id="timelineTitle" contenteditable="true" style="outline:none;border-bottom:1px dashed transparent;cursor:text"
+        onfocus="this.style.borderBottomColor='var(--accent)'"
+        onblur="this.style.borderBottomColor='transparent';saveScriptTitle(this.textContent)"
+        title="Click to edit title">No script loaded</h3>
     <span id="timelineDuration" style="font-size:13px;color:var(--text2)"></span>
     <div style="flex:1"></div>
     <button class="btn btn-secondary" onclick="exportEDL()">Export EDL</button>
@@ -387,6 +384,68 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
   </div>
   <div class="filmstrip" id="filmstrip"></div>
 </div>
+
+<!-- Clip Info Modal -->
+<div id="clipInfoModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:560px;max-width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,0.4)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">
+      <h2 style="font-size:16px;font-weight:800" id="clipInfoTitle">Clip Detail</h2>
+      <button class="btn btn-ghost" onclick="document.getElementById('clipInfoModal').style.display='none'" style="font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="clipInfoBody" style="padding:20px"></div>
+  </div>
+</div>
+
+<!-- New Script Modal -->
+<div id="newScriptModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center" onclick="if(event.target===this)hideNewScriptModal()">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:480px;max-width:90vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,0.4)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)">
+      <h2 style="font-size:18px;font-weight:800">✨ New AI Script</h2>
+      <button class="btn btn-ghost" onclick="hideNewScriptModal()" style="font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:24px">
+      <div class="form-group">
+        <label class="form-label">Script Name</label>
+        <input type="text" id="scriptNameInput" placeholder="My Edit" style="width:100%">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Target Duration</label>
+        <div class="duration-presets" id="durPresets">
+          <button class="dur-btn" data-dur="30">30s</button>
+          <button class="dur-btn" data-dur="60">1min</button>
+          <button class="dur-btn active" data-dur="120">2min</button>
+          <button class="dur-btn" data-dur="300">5min</button>
+          <button class="dur-btn" data-dur="600">10min</button>
+          <button class="dur-btn" data-dur="0">Full</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Style</label>
+        <select id="styleSelect" style="width:100%">
+          <option>Highlight Reel</option>
+          <option>Documentary</option>
+          <option>Interview</option>
+          <option>Social Media</option>
+          <option>Tutorial</option>
+          <option>Custom</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Clips</label>
+        <div style="font-size:13px;color:var(--text2)" id="modalClipSummary">0 clips selected</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Select clips from the left panel before generating</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Instructions (optional)</label>
+        <textarea id="promptInput" placeholder="What should this video be about? What's the story? Any specific moments to include?" rows="4" style="width:100%"></textarea>
+      </div>
+      <button class="btn btn-accent btn-lg" style="width:100%" id="generateBtn" onclick="generateScript()">✨ Generate with AI</button>
+      <div style="font-size:11px;color:var(--text3);font-style:italic;margin-top:10px;text-align:center">AI arranges and trims existing clips — it cannot create new dialog.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end appMain -->
 
 <div class="toast-container" id="toasts"></div>
 
@@ -512,13 +571,13 @@ function renderClips() {
     <div class="clip-card ${S.selectedClipDetail === c.id ? 'selected' : ''}" onclick="showClipDetail(${c.id})">
       <img class="clip-thumb" src="/api/thumbnails/${c.id}" onerror="this.style.background='var(--surface2)';this.src=''" loading="lazy">
       <div class="clip-info">
-        <div class="clip-name">${c.filename}</div>
+        <div class="clip-name">${escHtml(c.filename)}${c.ai_title ? ` <span style="color:var(--text2);font-weight:400">— ${escHtml(c.ai_title)}</span>` : ''}</div>
         <div class="clip-meta">
           <span class="clip-duration">${fmtDur(c.duration_seconds)}</span>
           <span class="badge badge-${(c.camera||'unknown').toLowerCase()}">${c.camera||'?'}</span>
           ${c.has_transcript ? '<span class="badge badge-transcribed">✓</span>' : '<span class="badge badge-pending">…</span>'}
         </div>
-        ${c.transcript_preview ? `<div class="clip-preview-text">${escHtml(c.transcript_preview)}</div>` : ''}
+        ${c.ai_summary ? `<div class="clip-preview-text">${escHtml(c.ai_summary)}</div>` : (c.transcript_preview ? `<div class="clip-preview-text">${escHtml(c.transcript_preview)}</div>` : '')}
       </div>
     </div>
   `).join('');
@@ -582,14 +641,15 @@ function closeClipDetail() {
 function renderClipSelector() {
   const clips = S.clips.filter(c => c.has_transcript);
   $('#clipSelector').innerHTML = clips.length ? clips.map(c => `
-    <label class="clip-select-item">
+    <div class="clip-select-item">
       <input type="checkbox" ${S.selectedClips.has(c.id)?'checked':''} onchange="toggleClipSelect(${c.id},this.checked)">
       <img class="clip-select-thumb" src="/api/thumbnails/${c.id}" onerror="this.style.background='var(--surface2)'">
-      <div class="clip-select-info">
-        <div class="clip-select-name">${escHtml(c.filename)}</div>
-        <div class="clip-select-meta">${fmtDur(c.duration_seconds)} · ${escHtml((c.transcript_preview||'').slice(0,60))}</div>
+      <div class="clip-select-info" onclick="toggleClipSelect(${c.id},!S.selectedClips.has(${c.id}));renderClipSelector()">
+        <div class="clip-select-name">${escHtml(c.filename)}${c.ai_title ? ` — ${escHtml(c.ai_title)}` : ''}</div>
+        <div class="clip-select-meta">${fmtDur(c.duration_seconds)} · ${escHtml(c.ai_summary || (c.transcript_preview||'').slice(0,60))}</div>
       </div>
-    </label>
+      <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showClipInfoModal(${c.id})" title="Clip details" style="font-size:14px;padding:4px 6px;flex-shrink:0;opacity:0.5" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">ℹ️</button>
+    </div>
   `).join('') : '<div style="padding:20px;color:var(--text3);text-align:center">No transcribed clips yet</div>';
   updateSelectionSummary();
 }
@@ -625,18 +685,21 @@ document.addEventListener('click', e => {
 });
 
 async function generateScript() {
-  if (S.selectedClips.size === 0) { toast('Select at least one clip', 'error'); return; }
+  const clipIds = S.selectedClips.size > 0 ? [...S.selectedClips] : S.clips.map(c => c.id);
+  if (clipIds.length === 0) { toast('No clips available', 'error'); return; }
   const btn = $('#generateBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Generating…';
   try {
     const result = await apiPost('/ai/auto-edit', {
-      clip_ids: [...S.selectedClips],
+      clip_ids: clipIds,
       target_duration: S.targetDuration || 9999,
       style: $('#styleSelect').value,
-      prompt: $('#promptInput').value || ''
+      prompt: $('#promptInput').value || '',
+      script_name: $('#scriptNameInput').value || undefined
     });
     if (result.error) { toast(result.error, 'error'); return; }
+    hideNewScriptModal();
     toast(`Script created: ${result.script_name}`, 'success');
     await loadScriptsList();
     if (result.script_id) {
@@ -685,7 +748,10 @@ function renderScript(data) {
   const inner = $('#scriptDoc');
 
   let html = `<div style="padding:24px;">
-    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px;color:var(--text)">${escHtml(script.name)}</h2>
+    <h2 contenteditable="true" style="font-size:20px;font-weight:700;margin-bottom:4px;color:var(--text);outline:none;border-bottom:1px dashed transparent;cursor:text" 
+        onfocus="this.style.borderBottomColor='var(--accent)'" 
+        onblur="this.style.borderBottomColor='transparent';saveScriptTitle(this.textContent)"
+        title="Click to edit title">${escHtml(script.name)}</h2>
     <p style="font-size:13px;color:var(--text3);margin-bottom:20px">${fmtDurLong(totalDur)} · ${segments.length} segments</p>
     <div style="display:flex;gap:24px;">
       <!-- Outline column -->
@@ -1106,8 +1172,215 @@ function pollTranscription() {
   setTimeout(poll, 2000);
 }
 
+// ── Script Title Save ──
+async function saveScriptTitle(newTitle) {
+  if (!S.currentScript || !newTitle.trim()) return;
+  try {
+    await fetch(`/api/script/${S.currentScript}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: newTitle.trim()})
+    });
+    if (S.currentScriptData) S.currentScriptData.script.name = newTitle.trim();
+    loadScriptsList(); // refresh dropdown
+  } catch(e) { toast('Save failed', 'error'); }
+}
+
+// ── Clip Field Save ──
+async function saveClipField(clipId, field, value) {
+  try {
+    await fetch(`/api/clip/${clipId}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({[field]: value})
+    });
+    // Update local state
+    const clip = S.clips.find(c => c.id === clipId);
+    if (clip) clip[field] = value;
+    renderClips();
+    renderClipSelector();
+  } catch(e) { toast('Save failed', 'error'); }
+}
+
+// ── Clip Info Modal ──
+async function showClipInfoModal(id) {
+  const clip = S.clips.find(c => c.id === id);
+  if (!clip) return;
+  document.getElementById('clipInfoTitle').textContent = clip.filename;
+  let html = `
+    <img src="/api/thumbnails/${id}" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--radius);background:var(--surface2);margin-bottom:16px" onerror="this.style.display='none'">
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">Title</label>
+      <input type="text" id="clipTitleEdit" value="${escHtml(clip.ai_title || '')}" placeholder="Add a title..." 
+        style="width:100%;font-size:15px;font-weight:600;margin-top:4px"
+        onchange="saveClipField(${id},'ai_title',this.value)">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">Summary</label>
+      <input type="text" id="clipSummaryEdit" value="${escHtml(clip.ai_summary || '')}" placeholder="Add a summary..."
+        style="width:100%;font-size:13px;margin-top:4px"
+        onchange="saveClipField(${id},'ai_summary',this.value)">
+    </div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px;margin-bottom:20px">
+      <span style="color:var(--text2)">Duration</span><span style="font-weight:600">${fmtDurLong(clip.duration_seconds)}</span>
+      <span style="color:var(--text2)">Resolution</span><span style="font-weight:600">${clip.resolution || '—'}</span>
+      <span style="color:var(--text2)">FPS</span><span style="font-weight:600">${clip.fps || '—'}</span>
+      <span style="color:var(--text2)">Codec</span><span style="font-weight:600">${clip.codec || '—'}</span>
+      <span style="color:var(--text2)">Camera</span><span style="font-weight:600">${clip.camera || '—'}</span>
+      <span style="color:var(--text2)">Path</span><span style="font-weight:600;word-break:break-all">${escHtml(clip.relative_path || clip.filename)}</span>
+      <span style="color:var(--text2)">Transcribed</span><span style="font-weight:600">${clip.has_transcript ? '✅ Yes' : '❌ No'}</span>
+    </div>
+  `;
+  // Load transcript
+  if (clip.has_transcript) {
+    try {
+      const t = await api('/transcript/' + id);
+      if (t && t.segments && t.segments.length) {
+        html += '<div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Transcript</div>';
+        html += '<div style="max-height:300px;overflow-y:auto;padding:12px;background:var(--surface2);border-radius:var(--radius);font-size:13px;line-height:1.8">';
+        html += t.segments.map(s => `<span style="color:var(--text3);font-size:11px;font-variant-numeric:tabular-nums">${fmtDur(s.start)}</span> ${escHtml(s.text)}`).join('<br>');
+        html += '</div>';
+      }
+    } catch(e) {}
+  }
+  document.getElementById('clipInfoBody').innerHTML = html;
+  document.getElementById('clipInfoModal').style.display = 'flex';
+}
+
+// ── New Script Modal ──
+function showNewScriptModal() {
+  const sel = S.selectedClips || new Set();
+  const selClips = S.clips.filter(c => sel.has(c.id));
+  const dur = selClips.reduce((a, c) => a + (c.duration_seconds || 0), 0);
+  document.getElementById('modalClipSummary').innerHTML = sel.size
+    ? `<strong>${sel.size}</strong> clips selected · ${fmtDur(dur)} total`
+    : '<span style="color:var(--accent)">No clips selected — all clips will be used</span>';
+  document.getElementById('newScriptModal').style.display = 'flex';
+}
+function hideNewScriptModal() {
+  document.getElementById('newScriptModal').style.display = 'none';
+}
+
+// ── Folder Picker ──
+let browseCurrentPath = '';
+
+async function checkProject() {
+  try {
+    const project = await api('/project');
+    // Project is loaded, show app
+    showApp();
+    loadAll();
+  } catch(e) {
+    // No project, show folder picker
+    showFolderPicker();
+  }
+}
+
+function showFolderPicker() {
+  document.getElementById('folderPicker').style.display = 'flex';
+  document.getElementById('appMain').style.display = 'none';
+  loadRecents();
+  browseTo(null); // Start at home directory
+}
+
+function showApp() {
+  document.getElementById('folderPicker').style.display = 'none';
+  document.getElementById('appMain').style.display = 'flex';
+}
+
+async function loadRecents() {
+  try {
+    const recents = await fetch('/api/projects/recent').then(r => r.json());
+    const el = document.getElementById('recentProjects');
+    if (!recents || !recents.length) { el.innerHTML = ''; return; }
+    el.innerHTML = `
+      <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Recent Projects</div>
+      ${recents.map(r => `
+        <div onclick="openFolder('${r.path.replace(/'/g, "\\'")}')" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer;transition:all var(--transition)" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="font-size:22px">📁</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600">${r.name}</div>
+            <div style="font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.path}</div>
+          </div>
+          <div style="color:var(--text3);font-size:11px">${r.opened_at ? new Date(r.opened_at * 1000).toLocaleDateString() : ''}</div>
+        </div>
+      `).join('')}
+    `;
+  } catch(e) {}
+}
+
+async function browseTo(path) {
+  try {
+    const url = path ? `/api/browse?path=${encodeURIComponent(path)}` : '/api/browse';
+    const data = await fetch(url).then(r => r.json());
+    if (data.error) { toast(data.error, 'error'); return; }
+    browseCurrentPath = data.path;
+    document.getElementById('browsePath').value = data.path;
+    document.getElementById('browseUp').disabled = !data.parent;
+
+    // Check if current folder has videos
+    const hasVideoHere = data.dirs.some(d => false); // We check via open
+    // Show open button if there are video-containing subdirs or we want to let user try
+    document.getElementById('openFolderBtn').style.display = 'inline-flex';
+
+    const list = document.getElementById('browseList');
+    if (!data.dirs.length) {
+      list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3)">No subfolders</div>';
+      return;
+    }
+    list.innerHTML = data.dirs.map(d => `
+      <div onclick="browseTo('${d.path.replace(/'/g, "\\'")}')" 
+           style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background var(--transition);${d.has_video ? 'background:rgba(74,222,128,0.05)' : ''}"
+           onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${d.has_video ? 'rgba(74,222,128,0.05)' : ''}'">
+        <span style="font-size:16px">${d.has_video ? '🎬' : '📁'}</span>
+        <span style="flex:1;font-size:13px;${d.has_video ? 'color:var(--green);font-weight:600' : ''}">${d.name}</span>
+        ${d.has_video ? '<span style="font-size:11px;color:var(--green)">has videos</span>' : ''}
+        <span style="color:var(--text3);font-size:14px">›</span>
+      </div>
+    `).join('');
+  } catch(e) { toast('Browse failed: ' + e.message, 'error'); }
+}
+
+function browseUp() {
+  const parts = browseCurrentPath.split('/');
+  if (parts.length > 1) {
+    parts.pop();
+    browseTo(parts.join('/') || '/');
+  }
+}
+
+async function openCurrentFolder() {
+  await openFolder(browseCurrentPath);
+}
+
+async function openFolder(path) {
+  try {
+    document.getElementById('openFolderBtn').textContent = 'Opening…';
+    document.getElementById('openFolderBtn').disabled = true;
+    const res = await fetch('/api/project/open', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({path})
+    });
+    const data = await res.json();
+    if (data.error) {
+      toast(data.error, 'error');
+      document.getElementById('openFolderBtn').textContent = 'Open This Folder';
+      document.getElementById('openFolderBtn').disabled = false;
+      return;
+    }
+    toast(`Opened ${data.name} — ${data.clip_count} clips`, 'success');
+    showApp();
+    loadAll();
+  } catch(e) {
+    toast('Failed to open: ' + e.message, 'error');
+    document.getElementById('openFolderBtn').textContent = 'Open This Folder';
+    document.getElementById('openFolderBtn').disabled = false;
+  }
+}
+
 // ── Init ──
-loadAll();
+checkProject();
 
 // Also load transcript text for script segments (the API may not include it)
 // We'll enrich script data with transcript text when loading scripts

@@ -15,6 +15,7 @@ PROJECT_DIR = None
 DB_PATH = None
 RF_DIR = None
 THUMB_DIR = None
+PROJECT_READY = False  # True once a project dir is loaded
 
 # DaVinci Resolve connection
 _resolve = None
@@ -97,6 +98,120 @@ def generate_thumbnail(clip_id, full_path, duration):
     except Exception:
         pass
     return out_path if os.path.exists(out_path) else None
+
+
+def open_project(directory):
+    """Initialize (or switch to) a project directory at runtime."""
+    global PROJECT_DIR, DB_PATH, RF_DIR, THUMB_DIR, PROJECT_READY
+    directory = os.path.abspath(directory)
+    if not os.path.isdir(directory):
+        return {'error': f'Not a directory: {directory}'}
+
+    # Check it has video files
+    has_video = False
+    for root, _, files in os.walk(directory):
+        for f in files:
+            if os.path.splitext(f)[1].lower() in VIDEO_EXTS:
+                has_video = True
+                break
+        if has_video:
+            break
+    if not has_video:
+        return {'error': 'No video files found in this folder'}
+
+    PROJECT_DIR = directory
+    RF_DIR = os.path.join(PROJECT_DIR, '.resolveflow')
+    DB_PATH = os.path.join(RF_DIR, 'project.db')
+    THUMB_DIR = os.path.join(RF_DIR, 'thumbnails')
+    os.makedirs(THUMB_DIR, exist_ok=True)
+
+    db.init_db(DB_PATH)
+    added = do_ingest()
+    clips = db.get_all_clips(DB_PATH)
+    threading.Thread(target=generate_all_thumbnails, daemon=True).start()
+    PROJECT_READY = True
+    print(f"Project opened: {PROJECT_DIR} ({len(clips)} clips, {added} new)")
+
+    # Save to recents
+    _save_recent(PROJECT_DIR)
+
+    return {
+        'path': PROJECT_DIR,
+        'name': os.path.basename(PROJECT_DIR),
+        'clip_count': len(clips),
+        'added': added
+    }
+
+
+def _save_recent(directory):
+    """Save directory to recents list."""
+    recents_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.resolveflow_recents.json')
+    recents = []
+    try:
+        with open(recents_file) as f:
+            recents = json.load(f)
+    except Exception:
+        pass
+    entry = {'path': directory, 'name': os.path.basename(directory), 'opened_at': time.time()}
+    recents = [r for r in recents if r['path'] != directory]
+    recents.insert(0, entry)
+    recents = recents[:10]  # Keep last 10
+    try:
+        with open(recents_file, 'w') as f:
+            json.dump(recents, f)
+    except Exception:
+        pass
+
+
+def browse_dirs(path=None):
+    """List subdirectories of a given path for the folder picker."""
+    if path is None:
+        path = os.path.expanduser('~')
+    path = os.path.abspath(path)
+    if not os.path.isdir(path):
+        return {'error': 'Not a directory', 'path': path, 'dirs': []}
+
+    dirs = []
+    try:
+        for entry in sorted(os.scandir(path), key=lambda e: e.name.lower()):
+            if entry.name.startswith('.'):
+                continue
+            if entry.is_dir(follow_symlinks=False):
+                # Check if it has video files (shallow check for speed)
+                has_video = False
+                try:
+                    for sub_entry in os.scandir(entry.path):
+                        if sub_entry.is_file() and os.path.splitext(sub_entry.name)[1].lower() in VIDEO_EXTS:
+                            has_video = True
+                            break
+                        if sub_entry.is_dir(follow_symlinks=False):
+                            # Check one level deeper
+                            try:
+                                for sub2 in os.scandir(sub_entry.path):
+                                    if sub2.is_file() and os.path.splitext(sub2.name)[1].lower() in VIDEO_EXTS:
+                                        has_video = True
+                                        break
+                            except PermissionError:
+                                pass
+                        if has_video:
+                            break
+                except PermissionError:
+                    pass
+                dirs.append({
+                    'name': entry.name,
+                    'path': entry.path,
+                    'has_video': has_video
+                })
+    except PermissionError:
+        return {'error': 'Permission denied', 'path': path, 'dirs': []}
+
+    # Include parent
+    parent = os.path.dirname(path)
+    return {
+        'path': path,
+        'parent': parent if parent != path else None,
+        'dirs': dirs
+    }
 
 
 def generate_all_thumbnails():
@@ -365,11 +480,69 @@ def do_transcribe_resolve():
             pass
 
     _transcription_progress['running'] = False
+
+    # Generate AI titles and summaries for newly transcribed clips
+    _transcription_progress['current'] = 'Generating AI summaries...'
+    try:
+        _generate_clip_ai_metadata()
+    except Exception as e:
+        print(f"  AI metadata generation error: {e}", flush=True)
+
     return {
         'transcribed': saved,
         'total_clips': len(clips_to_process),
         'errors': _transcription_progress['errors']
     }
+
+
+def _generate_clip_ai_metadata():
+    """Generate AI title and summary for clips that have transcripts but no ai_title yet."""
+    conn = db.get_db(DB_PATH)
+    rows = conn.execute("""
+        SELECT c.id, c.filename, c.duration_seconds, t.full_text
+        FROM clips c
+        JOIN transcripts t ON t.clip_id = c.id
+        WHERE (c.ai_title IS NULL OR c.ai_title = '') AND t.full_text != ''
+    """).fetchall()
+    conn.close()
+
+    if not rows:
+        return
+
+    # Batch all clips into one AI call for efficiency
+    clip_texts = []
+    for r in rows:
+        dur = f"{r['duration_seconds']:.0f}s" if r['duration_seconds'] else '?'
+        text_preview = (r['full_text'] or '')[:500]
+        clip_texts.append(f"CLIP {r['id']} ({r['filename']}, {dur}):\n{text_preview}")
+
+    prompt = f"""For each video clip below, provide:
+1. A short descriptive title (3-8 words, no quotes)
+2. A one-sentence summary of what's being discussed
+
+Respond in JSON format: [{{"id": <clip_id>, "title": "...", "summary": "..."}}]
+
+{chr(10).join(clip_texts)}"""
+
+    try:
+        result = ai_request(prompt, system="You are a video librarian. Be concise and descriptive.", temperature=0.3)
+        # Parse JSON from response
+        # Handle markdown code blocks
+        result = result.strip()
+        if result.startswith('```'):
+            result = result.split('\n', 1)[1] if '\n' in result else result[3:]
+            result = result.rsplit('```', 1)[0]
+        items = json.loads(result)
+
+        conn = db.get_db(DB_PATH)
+        for item in items:
+            conn.execute("UPDATE clips SET ai_title=?, ai_summary=? WHERE id=?",
+                        (item.get('title', ''), item.get('summary', ''), item['id']))
+        conn.commit()
+        conn.close()
+        print(f"  Generated AI metadata for {len(items)} clips", flush=True)
+    except Exception as e:
+        print(f"  AI metadata error: {e}", flush=True)
 
 
 def do_ingest():
@@ -387,66 +560,7 @@ def do_ingest():
     return added
 
 
-def do_transcribe_whisper():
-    """Transcribe clips using OpenAI Whisper API."""
-    api_key = os.environ.get('OPENAI_API_KEY')
-    if not api_key:
-        return {'error': 'OPENAI_API_KEY not set'}
-
-    clip_ids = db.get_untranscribed_clip_ids(DB_PATH)
-    results = []
-    for cid in clip_ids:
-        clip = db.get_clip(DB_PATH, cid)
-        if not clip:
-            continue
-        tmp_wav = None
-        try:
-            tmp_wav = tempfile.mktemp(suffix='.wav')
-            subprocess.run([
-                'ffmpeg', '-y', '-i', clip['full_path'],
-                '-ar', '16000', '-ac', '1', '-f', 'wav', tmp_wav
-            ], capture_output=True, timeout=300)
-
-            if not os.path.exists(tmp_wav):
-                results.append({'clip_id': cid, 'error': 'audio extraction failed'})
-                continue
-
-            import urllib.request
-            boundary = '----ResolveFlowBoundary'
-            body = b''
-            body += f'--{boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n'.encode()
-            body += f'--{boundary}\r\nContent-Disposition: form-data; name="response_format"\r\n\r\nverbose_json\r\n'.encode()
-            body += f'--{boundary}\r\nContent-Disposition: form-data; name="timestamp_granularities[]"\r\n\r\nsegment\r\n'.encode()
-            with open(tmp_wav, 'rb') as af:
-                audio_data = af.read()
-            body += f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.wav"\r\nContent-Type: audio/wav\r\n\r\n'.encode()
-            body += audio_data
-            body += f'\r\n--{boundary}--\r\n'.encode()
-
-            req = urllib.request.Request(
-                'https://api.openai.com/v1/audio/transcriptions',
-                data=body,
-                headers={
-                    'Authorization': f'Bearer {api_key}',
-                    'Content-Type': f'multipart/form-data; boundary={boundary}'
-                }
-            )
-            resp = urllib.request.urlopen(req, timeout=600)
-            raw = json.loads(resp.read())
-
-            full_text = raw.get('text', '')
-            segments = [{'text': s.get('text', ''), 'start': s.get('start', 0), 'end': s.get('end', 0)} for s in raw.get('segments', [])]
-
-            db.save_transcript(DB_PATH, cid, full_text, segments, raw,
-                             duration=raw.get('duration'), language=raw.get('language', 'en'), method='whisper')
-            results.append({'clip_id': cid, 'status': 'ok', 'words': len(full_text.split())})
-        except Exception as e:
-            results.append({'clip_id': cid, 'error': str(e)})
-        finally:
-            if tmp_wav and os.path.exists(tmp_wav):
-                os.unlink(tmp_wav)
-
-    return {'transcribed': len([r for r in results if r.get('status') == 'ok']), 'results': results}
+# Whisper removed — all transcription uses DaVinci Resolve's native API
 
 
 def ai_request(prompt, system="You are a professional video editor.", model="gpt-4o-mini", temperature=0.7):
@@ -864,6 +978,43 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             return
 
         # --- API Routes ---
+
+        # Browse directories (no project needed)
+        if path == '/api/browse' and method == 'GET':
+            params = parse_qs(urlparse(self.path).query)
+            browse_path = params.get('path', [None])[0]
+            self.send_json(browse_dirs(browse_path))
+            return
+
+        # Open a project folder
+        if path == '/api/project/open' and method == 'POST':
+            body = self.read_body()
+            folder = body.get('path', '')
+            if not folder:
+                self.send_json({'error': 'path is required'}, 400)
+                return
+            result = open_project(folder)
+            if 'error' in result:
+                self.send_json(result, 400)
+            else:
+                self.send_json(result)
+            return
+
+        # Recent projects list
+        if path == '/api/projects/recent' and method == 'GET':
+            recents_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.resolveflow_recents.json')
+            try:
+                with open(recents_file) as f:
+                    self.send_json(json.load(f))
+            except Exception:
+                self.send_json([])
+            return
+
+        # All other API routes require an active project
+        if not PROJECT_READY and path.startswith('/api/'):
+            self.send_json({'error': 'no_project', 'message': 'No project open. Use /api/project/open first.'}, 400)
+            return
+
         if path == '/api/project' and method == 'GET':
             clips = db.get_all_clips(DB_PATH)
             total_dur = sum(c.get('duration_seconds') or 0 for c in clips)
@@ -916,6 +1067,18 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             clip = db.get_clip(DB_PATH, cid)
             self.send_json(clip if clip else {'error': 'not found'}, 200 if clip else 404)
 
+        elif re.match(r'/api/clip/(\d+)$', path) and method == 'PUT':
+            cid = int(re.match(r'/api/clip/(\d+)', path).group(1))
+            body = self.read_body()
+            conn = db.get_db(DB_PATH)
+            if 'ai_title' in body:
+                conn.execute("UPDATE clips SET ai_title=? WHERE id=?", (body['ai_title'], cid))
+            if 'ai_summary' in body:
+                conn.execute("UPDATE clips SET ai_summary=? WHERE id=?", (body['ai_summary'], cid))
+            conn.commit()
+            conn.close()
+            self.send_json({'ok': True})
+
         elif path == '/api/ingest' and method == 'POST':
             added = do_ingest()
             clips = db.get_all_clips(DB_PATH)
@@ -936,21 +1099,12 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             self.send_json(_transcription_progress)
 
         elif path == '/api/transcribe' and method == 'POST':
-            body = self.read_body() if self.headers.get('Content-Length') else {}
-            use_whisper = body.get('method') == 'whisper'
-            if use_whisper:
-                def run():
-                    result = do_transcribe_whisper()
-                    print(f"Whisper transcription complete: {result}")
-                threading.Thread(target=run, daemon=True).start()
-                remaining = len(db.get_untranscribed_clip_ids(DB_PATH))
-                self.send_json({'status': 'started', 'method': 'whisper', 'clips_to_transcribe': remaining})
-            else:
-                def run():
-                    result = do_transcribe_resolve()
-                    print(f"Resolve transcription complete: {result}")
-                threading.Thread(target=run, daemon=True).start()
-                self.send_json({'status': 'started', 'method': 'resolve'})
+            # Always uses DaVinci Resolve's native transcription API
+            def run():
+                result = do_transcribe_resolve()
+                print(f"Resolve transcription complete: {result}", flush=True)
+            threading.Thread(target=run, daemon=True).start()
+            self.send_json({'status': 'started', 'method': 'resolve'})
 
         elif path == '/api/scripts' and method == 'GET':
             self.send_json(db.get_all_scripts(DB_PATH))
@@ -1089,35 +1243,35 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
 
 
 def main():
-    global PROJECT_DIR, DB_PATH, RF_DIR, THUMB_DIR
+    global PROJECT_DIR, DB_PATH, RF_DIR, THUMB_DIR, PROJECT_READY
 
-    PROJECT_DIR = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else '.')
-    if not os.path.isdir(PROJECT_DIR):
-        print(f"Error: {PROJECT_DIR} is not a directory")
-        sys.exit(1)
-
-    RF_DIR = os.path.join(PROJECT_DIR, '_ai-video-helper')
-    DB_PATH = os.path.join(RF_DIR, 'project.db')
-    THUMB_DIR = os.path.join(RF_DIR, 'thumbnails')
-    os.makedirs(THUMB_DIR, exist_ok=True)
-
-    print(f"ResolveFlow v2 — {PROJECT_DIR}")
-    print(f"Database: {DB_PATH}")
-
-    db.init_db(DB_PATH)
-
-    added = do_ingest()
-    clips = db.get_all_clips(DB_PATH)
-    print(f"Clips: {len(clips)} ({added} new)")
-    total = sum(c.get('duration_seconds') or 0 for c in clips)
-    print(f"Total duration: {total:.1f}s ({total/60:.1f}m)")
-
-    resolve = connect_resolve()
-    if resolve:
-        status = get_resolve_status()
-        print(f"DaVinci Resolve: Connected — {status.get('project', '?')}")
+    # Project dir is now optional — if provided, open it immediately
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    if args:
+        initial_dir = os.path.abspath(args[0])
+        if not os.path.isdir(initial_dir):
+            print(f"Error: {initial_dir} is not a directory")
+            sys.exit(1)
+        result = open_project(initial_dir)
+        if 'error' in result:
+            print(f"Error: {result['error']}")
+            sys.exit(1)
+        clips = db.get_all_clips(DB_PATH)
+        total = sum(c.get('duration_seconds') or 0 for c in clips)
+        print(f"ResolveFlow — {PROJECT_DIR}", flush=True)
+        print(f"Clips: {len(clips)}, Duration: {total:.1f}s ({total/60:.1f}m)", flush=True)
     else:
-        print("DaVinci Resolve: Not connected (will retry on API calls)")
+        print("ResolveFlow — No project (select a folder in the UI)", flush=True)
+
+    # Connect to Resolve in background to avoid blocking startup
+    def _connect_bg():
+        resolve = connect_resolve()
+        if resolve:
+            status = get_resolve_status()
+            print(f"DaVinci Resolve: Connected — {status.get('project', '?')}", flush=True)
+        else:
+            print("DaVinci Resolve: Not connected (will retry on API calls)", flush=True)
+    threading.Thread(target=_connect_bg, daemon=True).start()
 
     port = int(os.environ.get('PORT', '8080'))
     no_browser = '--no-browser' in sys.argv
@@ -1129,7 +1283,7 @@ def main():
             super().server_bind()
 
     server = ReusableHTTPServer(('0.0.0.0', port), ResolveFlowHandler)
-    print(f"Server: http://localhost:{port}")
+    print(f"Server: http://localhost:{port}", flush=True)
 
     if not no_browser:
         threading.Timer(1, lambda: webbrowser.open(f'http://localhost:{port}')).start()

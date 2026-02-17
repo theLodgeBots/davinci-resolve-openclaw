@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS clips (
     file_size_bytes INTEGER,
     has_audio BOOLEAN DEFAULT 1,
     thumbnail_path TEXT,
+    ai_title TEXT,
+    ai_summary TEXT,
     ingested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -79,6 +81,12 @@ def get_db(db_path):
 def init_db(db_path):
     conn = get_db(db_path)
     conn.executescript(SCHEMA)
+    # Migrations
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(clips)").fetchall()}
+    if 'ai_title' not in cols:
+        conn.execute("ALTER TABLE clips ADD COLUMN ai_title TEXT")
+    if 'ai_summary' not in cols:
+        conn.execute("ALTER TABLE clips ADD COLUMN ai_summary TEXT")
     conn.commit()
     conn.close()
 
