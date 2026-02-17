@@ -708,11 +708,27 @@ CRITICAL RULES:
             if dur < 2.0:
                 continue
             if dur > 20.0:
-                # Trim to 20s from start
                 s['end_time'] = s['start_time'] + 20.0
                 print(f"  Capped segment '{s.get('section_name','')}' from {dur:.1f}s to 20.0s", flush=True)
             valid_sections.append(s)
         sections = valid_sections
+
+        # Trim excess sections if total overshoots padded target by >15%
+        max_allowed = padded_duration * 1.15
+        running_total = sum(s.get('end_time', 0) - s.get('start_time', 0) for s in sections)
+        if running_total > max_allowed:
+            print(f"  Trimming overshoot: {running_total:.1f}s > {max_allowed:.1f}s max", flush=True)
+            trimmed = []
+            total = 0
+            for s in sections:
+                dur = s.get('end_time', 0) - s.get('start_time', 0)
+                if total + dur > max_allowed and trimmed:
+                    print(f"  Dropped '{s.get('section_name','')}' ({dur:.1f}s) — over budget", flush=True)
+                    continue
+                trimmed.append(s)
+                total += dur
+            sections = trimmed
+
         edit_plan['sections'] = sections
 
         # Create script and segments in DB (or use existing script_id)
