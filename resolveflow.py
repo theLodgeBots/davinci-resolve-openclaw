@@ -544,12 +544,13 @@ Create a compelling edit plan. Return ONLY a JSON object (no markdown, no explan
 
 Rules:
 - Pick the best soundbites and create a narrative arc
-- Total duration of all sections should be approximately {target_duration} seconds
+- CRITICAL: Total duration of ALL sections combined MUST be approximately {target_duration} seconds. Add up (end_time - start_time) for each section and verify the total is close to {target_duration}. If too short, include more/longer segments. If too long, trim segments.
 - start_time and end_time must be within the clip's actual transcript timecodes
 - Use the clip_id values provided above
 - Ensure smooth flow between sections
 - Each section should have a descriptive section_name
-- Include at least 3 sections"""
+- Include enough sections to fill the target duration — typically 6-12 sections for a 60 second video
+- Prefer longer segments (8-15 seconds each) over very short ones"""
 
     try:
         result = ai_request(prompt, temperature=0.5)
@@ -758,8 +759,21 @@ def do_export_to_resolve(script_id):
         if not new_tl:
             return {'error': 'Failed to create timeline'}
 
-        fps_str = new_tl.GetSetting('timelineFrameRate')
-        fps = float(fps_str) if fps_str else 24.0
+        # Get source FPS for each clip (may differ from timeline FPS)
+        clip_fps = {}
+        for rc in resolve_clips:
+            try:
+                props = rc.GetClipProperty()
+                if props:
+                    fname = props.get('File Name', '')
+                    fps_val = props.get('FPS', '24')
+                    # FPS can be like "59.94" or "29.97" or "24.0"
+                    try:
+                        clip_fps[fname] = float(str(fps_val).replace(';',''))
+                    except:
+                        clip_fps[fname] = 24.0
+            except:
+                pass
 
         added = 0
         for seg in segments:
@@ -768,8 +782,10 @@ def do_export_to_resolve(script_id):
                 continue
 
             mpi = fname_to_mpi[fname]
-            start_frame = int(seg['start_time'] * fps)
-            end_frame = int(seg['end_time'] * fps)
+            # Use SOURCE clip FPS for frame calculation, not timeline FPS
+            src_fps = clip_fps.get(fname, 24.0)
+            start_frame = int(seg['start_time'] * src_fps)
+            end_frame = int(seg['end_time'] * src_fps)
 
             try:
                 result = pool.AppendToTimeline([{
