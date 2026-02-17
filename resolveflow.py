@@ -843,6 +843,25 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             db.delete_script(DB_PATH, sid)
             self.send_json({'ok': True})
 
+        elif re.match(r'/api/script/(\d+)/update-segments$', path) and method == 'POST':
+            sid = int(re.match(r'/api/script/(\d+)', path).group(1))
+            body = self.read_body()
+            segments = body.get('segments', [])
+            conn = db.get_db(DB_PATH)
+            conn.execute("DELETE FROM script_segments WHERE script_id=?", (sid,))
+            for seg in segments:
+                conn.execute(
+                    """INSERT INTO script_segments (script_id, clip_id, start_time, end_time, section_name, order_index, notes, transition)
+                       VALUES (?,?,?,?,?,?,?,?)""",
+                    (sid, seg['clip_id'], seg['start_time'], seg['end_time'],
+                     seg.get('section_name', ''), seg.get('order_index', 0),
+                     seg.get('notes', ''), seg.get('transition', 'cut'))
+                )
+            conn.execute("UPDATE scripts SET updated_at=CURRENT_TIMESTAMP WHERE id=?", (sid,))
+            conn.commit()
+            conn.close()
+            self.send_json({'ok': True, 'segments': len(segments)})
+
         elif re.match(r'/api/script/(\d+)/segments$', path) and method == 'POST':
             sid = int(re.match(r'/api/script/(\d+)', path).group(1))
             body = self.read_body()
