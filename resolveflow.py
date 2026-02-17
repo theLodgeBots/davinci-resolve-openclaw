@@ -635,19 +635,24 @@ def do_ai_auto_edit(target_duration=120, style="highlight reel", clip_ids=None, 
 
     duration_desc = f"{target_duration} seconds" if target_duration < 120 else f"{target_duration/60:.1f} minutes"
 
-    prompt = f"""You are a professional video editor. Given these transcripts from video clips, create an edit plan for a {duration_desc} {style}.
+    # Calculate total available speech to help the AI
+    total_speech = sum(
+        s.get('end_time', 0) - s.get('start_time', 0) for s in all_segments
+    )
 
-For each clip, I'm providing the filename, clip ID, duration, and full transcript with timecodes.
+    prompt = f"""You are a professional video editor. Create an edit plan for a {duration_desc} {style}.
+
+AVAILABLE CLIPS AND TRANSCRIPTS (total speech available: {total_speech:.0f}s):
 
 {clips_text}
 
-Create a compelling edit plan. Return ONLY a JSON object (no markdown, no explanation) with this exact structure:
+Return ONLY a JSON object (no markdown) with this structure:
 {{
   "name": "{style.title()} - {duration_desc}",
+  "total_planned_duration": <number>,
   "sections": [
     {{
       "section_name": "Opening",
-      "clip_id": 1,
       "clip_filename": "C0021.MP4",
       "start_time": 5.2,
       "end_time": 18.7,
@@ -656,20 +661,15 @@ Create a compelling edit plan. Return ONLY a JSON object (no markdown, no explan
   ]
 }}
 
-Rules:
-- ONLY use segments with STRONG, CLEAR, ON-TOPIC speech. Every second of the edit should have someone saying something meaningful. No filler, no dead air, no background noise sections, no false starts, no "um" segments.
-- Pick the best soundbites and create a narrative arc
-- CRITICAL: Total duration of ALL sections combined MUST be approximately {target_duration} seconds. Add up (end_time - start_time) for each section and verify the total is close to {target_duration}. If too short, include more/longer segments. If too long, trim segments.
-- start_time and end_time must be within the clip's actual transcript timecodes
-- Use the clip_id values provided above
-- Ensure smooth flow between sections
-- Each section should have a descriptive section_name
-- Include enough sections to fill the target duration — typically 6-12 sections for a 60 second video
-- Prefer longer segments (8-15 seconds each) over very short ones — tightly packed with speech
-- Skip clips with very short or incoherent transcripts (a few words only)
-- The "notes" field is for YOUR editing notes — it should describe why you chose this segment, NOT be the script text
-- Make sure start_time and end_time precisely match meaningful sentences in the transcript — don't cut mid-sentence
-- Verify: every selected time range should have continuous, substantive speech in the transcript"""
+CRITICAL RULES:
+1. TARGET DURATION: {target_duration} seconds. You MUST include enough sections so the sum of all (end_time - start_time) equals approximately {target_duration}s. Calculate and verify before responding. Put the total in "total_planned_duration".
+2. Use ONLY time ranges that contain speech (as shown in the transcript timecodes). The timecodes are accurate — if text appears at [4.8s - 11.1s], speech starts at 4.8s not 0.0s.
+3. Pick the BEST soundbites. Create a narrative arc. Prefer longer segments (8-15s each) with continuous speech.
+4. You can use MULTIPLE segments from the same clip — combine different time ranges from the same clip.
+5. Include 8-15 sections to fill {target_duration}s. If each section averages ~6s, you need ~{target_duration // 6} sections.
+6. clip_filename is REQUIRED for each section. Use the exact filenames shown above.
+7. Don't cut mid-sentence. Align start/end to sentence boundaries in the transcript.
+8. Skip clips with only a few words or non-English text."""
 
     try:
         result = ai_request(prompt, temperature=0.5)
@@ -846,6 +846,67 @@ Return ONLY a JSON object (no markdown) with this structure:
         return {'error': str(e)}
 
 
+def _detect_speech_bounds(clip_path, start_time, end_time, noise_db=-30, min_silence=0.4):
+    """Use ffmpeg silencedetect to find actual speech start/end within a time range.
+    Returns (speech_start, speech_end) trimmed to actual speech, or None if detection fails."""
+    duration = end_time - start_time
+    if duration < 0.5:
+        return None
+
+    try:
+        cmd = [
+            'ffmpeg', '-ss', str(max(0, start_time - 0.1)), '-t', str(duration + 0.2),
+            '-i', clip_path,
+            '-af', f'silencedetect=noise={noise_db}dB:d={min_silence}',
+            '-f', 'null', '-'
+        ]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        stderr = r.stderr
+
+        # Parse silence periods
+        silences = []
+        import re as _re
+        starts = _re.findall(r'silence_start:\s*([\d.]+)', stderr)
+        ends = _re.findall(r'silence_end:\s*([\d.]+)', stderr)
+
+        # Convert to absolute times (ffmpeg -ss offsets the timestamps)
+        offset = max(0, start_time - 0.1)
+        silence_ranges = []
+        for i in range(len(starts)):
+            s = float(starts[i]) + offset
+            e = float(ends[i]) + offset if i < len(ends) else end_time
+            silence_ranges.append((s, e))
+
+        # Find first speech start (after any leading silence)
+        speech_start = start_time
+        for s, e in silence_ranges:
+            if s <= start_time + 0.1:  # Leading silence
+                speech_start = max(speech_start, e)
+            else:
+                break
+
+        # Find last speech end (before any trailing silence)
+        speech_end = end_time
+        for s, e in reversed(silence_ranges):
+            if e >= end_time - 0.1:  # Trailing silence
+                speech_end = min(speech_end, s)
+            else:
+                break
+
+        # Add small padding (0.15s) for natural feel
+        speech_start = max(start_time, speech_start - 0.15)
+        speech_end = min(end_time, speech_end + 0.15)
+
+        # Only return if we actually trimmed something significant (>0.3s)
+        if (speech_start - start_time > 0.3) or (end_time - speech_end > 0.3):
+            if speech_end - speech_start > 0.5:  # Ensure remaining segment is meaningful
+                return (round(speech_start, 2), round(speech_end, 2))
+
+        return None
+    except Exception:
+        return None
+
+
 def do_export_to_resolve(script_id):
     """Push a script to DaVinci Resolve as a new timeline."""
     resolve = get_resolve()
@@ -919,13 +980,33 @@ def do_export_to_resolve(script_id):
                 continue
 
             mpi = fname_to_mpi[fname]
-            # AppendToTimeline startFrame/endFrame are source-clip-relative
-            # and Resolve handles FPS conversion internally
-            src_fps = clip_fps.get(fname, 24.0)
-            start_frame = int(seg['start_time'] * src_fps)
-            end_frame = int(seg['end_time'] * src_fps)
 
-            print(f"  Adding {fname}: {seg['start_time']:.1f}s-{seg['end_time']:.1f}s (frames {start_frame}-{end_frame} @ {src_fps}fps)", flush=True)
+            # Use ffmpeg silence detection to find actual speech boundaries
+            start_time = seg['start_time']
+            end_time = seg['end_time']
+            clip_path = seg.get('full_path', '')
+            if not clip_path:
+                # Look up from DB
+                clip_data = db.get_clip(DB_PATH, seg['clip_id'])
+                clip_path = clip_data['full_path'] if clip_data else ''
+
+            if clip_path and os.path.exists(clip_path):
+                try:
+                    tight = _detect_speech_bounds(clip_path, start_time, end_time)
+                    if tight:
+                        new_start, new_end = tight
+                        if new_start != start_time or new_end != end_time:
+                            print(f"  Speech trim {fname}: {start_time:.1f}-{end_time:.1f} → {new_start:.1f}-{new_end:.1f}", flush=True)
+                        start_time = new_start
+                        end_time = new_end
+                except Exception as e:
+                    print(f"  Speech detection failed for {fname}: {e}", flush=True)
+
+            src_fps = clip_fps.get(fname, 24.0)
+            start_frame = int(start_time * src_fps)
+            end_frame = int(end_time * src_fps)
+
+            print(f"  Adding {fname}: {start_time:.1f}s-{end_time:.1f}s (frames {start_frame}-{end_frame} @ {src_fps}fps)", flush=True)
 
             try:
                 result = pool.AppendToTimeline([{
