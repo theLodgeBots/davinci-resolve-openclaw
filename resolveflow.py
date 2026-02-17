@@ -633,7 +633,10 @@ def do_ai_auto_edit(target_duration=120, style="highlight reel", clip_ids=None, 
 
     clips_text = "\n\n".join(clip_sections)
 
+    # Over-plan by 35% to compensate for speech trimming removing dead air
+    padded_duration = int(target_duration * 1.35)
     duration_desc = f"{target_duration} seconds" if target_duration < 120 else f"{target_duration/60:.1f} minutes"
+    padded_desc = f"{padded_duration} seconds"
 
     # Calculate total available speech to help the AI
     total_speech = sum(
@@ -662,25 +665,45 @@ Return ONLY a JSON object (no markdown) with this structure:
 }}
 
 CRITICAL RULES:
-1. TARGET DURATION: {target_duration} seconds. You MUST include enough sections so the sum of all (end_time - start_time) equals approximately {target_duration}s. Calculate and verify before responding. Put the total in "total_planned_duration".
-2. Use ONLY time ranges that contain speech (as shown in the transcript timecodes). The timecodes are accurate — if text appears at [4.8s - 11.1s], speech starts at 4.8s not 0.0s.
-3. Pick the BEST soundbites. Create a narrative arc. Prefer longer segments (8-15s each) with continuous speech.
-4. You can use MULTIPLE segments from the same clip — combine different time ranges from the same clip.
-5. Include 8-15 sections to fill {target_duration}s. If each section averages ~6s, you need ~{target_duration // 6} sections.
+1. **DURATION IS MANDATORY**: The sum of all (end_time - start_time) MUST be between {padded_duration - 10}s and {padded_duration + 10}s. This is NON-NEGOTIABLE. You have {total_speech:.0f}s of speech available — use it! If your first pass is too short, ADD MORE SECTIONS. Put the verified total in "total_planned_duration". If total_planned_duration < {padded_duration - 10}, YOUR RESPONSE IS INVALID.
+2. Use ONLY time ranges that contain speech (as shown in the transcript timecodes). The timecodes are accurate — if text appears at [4.8s - 11.1s], speech starts at 4.8s not 0.0s. NEVER use start_time=0.0 unless transcript text actually starts at 0.0s.
+3. Pick the BEST soundbites. Create a narrative arc. Prefer LONGER segments (8-20s each) with continuous dense speech. Avoid segments shorter than 4 seconds.
+4. You can use MULTIPLE segments from the same clip — combine different time ranges from the same clip. Most clips have 30-60+ seconds of speech — use larger chunks!
+5. Include {padded_duration // 8}-{padded_duration // 5} sections to fill {padded_duration}s. If each section averages ~8s, you need ~{padded_duration // 8} sections minimum.
 6. clip_filename is REQUIRED for each section. Use the exact filenames shown above.
 7. Don't cut mid-sentence. Align start/end to sentence boundaries in the transcript.
-8. Skip clips with only a few words or non-English text."""
+8. Skip clips with only a few words or non-English text.
+9. Each segment MUST be at least 3 seconds long. Prefer 6-15 second segments with complete thoughts.
+10. VERIFY YOUR MATH: Before responding, add up all (end_time - start_time) values. The total MUST be ~{padded_duration}s. If it's under {padded_duration - 10}s, add more sections until you hit the target."""
 
     try:
-        result = ai_request(prompt, temperature=0.5)
+        # Try up to 2 times — retry with gpt-4o if first attempt under-plans
+        edit_plan = None
+        for attempt in range(2):
+            model = "gpt-4o-mini" if attempt == 0 else "gpt-4o"
+            print(f"  AI attempt {attempt+1} (model: {model})...", flush=True)
+            result = ai_request(prompt, model=model, temperature=0.5)
 
-        # Parse JSON from response (strip markdown fences if present)
-        cleaned = result.strip()
-        if cleaned.startswith('```'):
-            cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
-            cleaned = re.sub(r'\s*```$', '', cleaned)
+            # Parse JSON from response (strip markdown fences if present)
+            cleaned = result.strip()
+            if cleaned.startswith('```'):
+                cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
+                cleaned = re.sub(r'\s*```$', '', cleaned)
 
-        edit_plan = json.loads(cleaned)
+            edit_plan = json.loads(cleaned)
+
+            # Validate duration
+            sections = edit_plan.get('sections', [])
+            planned_total = sum(s.get('end_time', 0) - s.get('start_time', 0) for s in sections)
+            print(f"  AI planned {planned_total:.1f}s for padded target {padded_duration}s (original {target_duration}s)", flush=True)
+
+            if planned_total >= padded_duration * 0.75:
+                break  # Good enough
+            print(f"  ⚠️ Under-planned ({planned_total:.1f}s vs {padded_duration}s). {'Retrying with gpt-4o...' if attempt == 0 else 'Proceeding anyway.'}", flush=True)
+
+        # Filter out micro-segments (< 2s)
+        sections = [s for s in sections if s.get('end_time', 0) - s.get('start_time', 0) >= 2.0]
+        edit_plan['sections'] = sections
 
         # Create script and segments in DB (or use existing script_id)
         script_name = edit_plan.get('name', f'{style.title()} - {duration_desc}')
@@ -1208,6 +1231,54 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
 
         elif path == '/api/resolve/status' and method == 'GET':
             self.send_json(get_resolve_status())
+
+        elif re.match(r'/api/resolve/timeline-subtitles(?:/(.+))?$', path) and method == 'GET':
+            # Read subtitles from a Resolve timeline. Optional timeline name param.
+            m = re.match(r'/api/resolve/timeline-subtitles(?:/(.+))?$', path)
+            tl_name = m.group(1) if m.group(1) else None
+            resolve = get_resolve()
+            if not resolve:
+                self.send_json({'error': 'Resolve not connected'}, 503)
+            else:
+                try:
+                    pm = resolve.GetProjectManager()
+                    proj = pm.GetCurrentProject()
+                    tl = None
+                    if tl_name:
+                        from urllib.parse import unquote
+                        tl_name = unquote(tl_name)
+                        for i in range(1, proj.GetTimelineCount() + 1):
+                            t = proj.GetTimelineByIndex(i)
+                            if t and t.GetName() == tl_name:
+                                tl = t
+                                break
+                    else:
+                        tl = proj.GetCurrentTimeline()
+                    if not tl:
+                        self.send_json({'error': f'Timeline not found: {tl_name or "current"}'}, 404)
+                    else:
+                        track_count = tl.GetTrackCount('subtitle')
+                        subs = []
+                        if track_count > 0:
+                            items = tl.GetItemListInTrack('subtitle', 1)
+                            if items:
+                                fps = float(tl.GetSetting('timelineFrameRate') or 24)
+                                for item in items:
+                                    subs.append({
+                                        'text': item.GetName(),
+                                        'start_frame': item.GetStart(),
+                                        'end_frame': item.GetEnd(),
+                                        'duration_frames': item.GetDuration()
+                                    })
+                        full_text = ' '.join(s['text'] for s in subs)
+                        self.send_json({
+                            'timeline': tl.GetName(),
+                            'subtitle_count': len(subs),
+                            'subtitles': subs,
+                            'full_text': full_text
+                        })
+                except Exception as e:
+                    self.send_json({'error': str(e)}, 500)
 
         elif path == '/api/transcribe/progress' and method == 'GET':
             self.send_json(_transcription_progress)

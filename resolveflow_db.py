@@ -222,29 +222,44 @@ def get_script(db_path, script_id):
     for seg in segments:
         seg_dict = dict(seg)
         # Find transcript segments that overlap with this script segment's time range
-        # Only include text that falls within the edit's in/out points
-        # Use midpoint overlap: include a transcript segment only if its midpoint
-        # falls within the script segment's time range (avoids boundary bleeding)
+        # Strict matching: transcript segment must have >50% of its duration inside the script range
+        # This prevents same-clip segments from bleeding text across different time ranges
+        seg_start = seg_dict['start_time']
+        seg_end = seg_dict['end_time']
         ts = conn.execute("""
             SELECT text, start_time, end_time FROM transcript_segments
-            WHERE clip_id=? AND (start_time + end_time) / 2.0 >= ? AND (start_time + end_time) / 2.0 <= ?
+            WHERE clip_id=?
+              AND start_time < ?
+              AND end_time > ?
             ORDER BY start_time
-        """, (seg_dict['clip_id'], seg_dict['start_time'], seg_dict['end_time'])).fetchall()
-        if ts:
-            seg_dict['transcript_text'] = ' '.join(row['text'] for row in ts)
+        """, (seg_dict['clip_id'], seg_end, seg_start)).fetchall()
+        # Filter: only include if >50% of the transcript segment overlaps with script range
+        filtered = []
+        for row in ts:
+            t_start, t_end = row['start_time'], row['end_time']
+            t_dur = t_end - t_start
+            if t_dur <= 0:
+                continue
+            overlap_start = max(t_start, seg_start)
+            overlap_end = min(t_end, seg_end)
+            overlap = max(0, overlap_end - overlap_start)
+            if overlap / t_dur >= 0.5:
+                filtered.append(row)
+        if filtered:
+            seg_dict['transcript_text'] = ' '.join(row['text'] for row in filtered)
         else:
-            # Try wider search — find closest segments in this clip
-            ts_wide = conn.execute("""
+            # Fallback: midpoint overlap (less strict)
+            ts_mid = conn.execute("""
                 SELECT text, start_time, end_time FROM transcript_segments
-                WHERE clip_id=? ORDER BY ABS(start_time - ?) LIMIT 5
-            """, (seg_dict['clip_id'], seg_dict['start_time'])).fetchall()
-            if ts_wide:
-                seg_dict['transcript_text'] = ' '.join(row['text'] for row in ts_wide)
+                WHERE clip_id=? AND (start_time + end_time) / 2.0 >= ? AND (start_time + end_time) / 2.0 <= ?
+                ORDER BY start_time
+            """, (seg_dict['clip_id'], seg_start, seg_end)).fetchall()
+            if ts_mid:
+                seg_dict['transcript_text'] = ' '.join(row['text'] for row in ts_mid)
             else:
                 # Last resort: full clip transcript
                 t = conn.execute("SELECT full_text FROM transcripts WHERE clip_id=?", (seg_dict['clip_id'],)).fetchone()
                 seg_dict['transcript_text'] = t['full_text'] if t else ''
-            # Never show AI notes as transcript text — they're not real speech
         result_segments.append(seg_dict)
     
     conn.close()
