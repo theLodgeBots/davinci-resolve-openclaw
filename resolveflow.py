@@ -40,7 +40,7 @@ def scan_videos(directory):
     clips = []
     for root, _, files in os.walk(directory):
         for f in files:
-            if any(root.startswith(os.path.join(directory, skip)) for skip in ['.resolveflow']):
+            if any(root.startswith(os.path.join(directory, skip)) for skip in ['_ai-video-helper']):
                 continue
             ext = os.path.splitext(f)[1].lower()
             if ext not in VIDEO_EXTS:
@@ -1096,7 +1096,7 @@ def main():
         print(f"Error: {PROJECT_DIR} is not a directory")
         sys.exit(1)
 
-    RF_DIR = os.path.join(PROJECT_DIR, '.resolveflow')
+    RF_DIR = os.path.join(PROJECT_DIR, '_ai-video-helper')
     DB_PATH = os.path.join(RF_DIR, 'project.db')
     THUMB_DIR = os.path.join(RF_DIR, 'thumbnails')
     os.makedirs(THUMB_DIR, exist_ok=True)
