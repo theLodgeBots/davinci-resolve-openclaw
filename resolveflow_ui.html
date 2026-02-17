@@ -670,32 +670,44 @@ function renderScript(data) {
   const totalDur = segments.reduce((a, s) => a + ((s.end_time||0) - (s.start_time||0)), 0);
   const inner = $('#scriptDoc');
 
-  // Group consecutive segments by section name for clean reading
-  let html = `<div class="script-doc-inner" style="max-width:720px;margin:0 auto;padding:32px 24px;">
-    <h2 style="font-size:22px;font-weight:700;margin-bottom:4px;color:var(--text)">${escHtml(script.name)}</h2>
-    <p style="font-size:13px;color:var(--text3);margin-bottom:24px">${fmtDurLong(totalDur)} · ${segments.length} segments · ${segments.reduce((a,s) => a + (s.transcript_text||s.notes||'').split(/\s+/).length, 0)} words</p>
-    <hr style="border:none;border-top:1px solid var(--border);margin-bottom:24px">`;
+  let html = `<div style="padding:24px;">
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:4px;color:var(--text)">${escHtml(script.name)}</h2>
+    <p style="font-size:13px;color:var(--text3);margin-bottom:20px">${fmtDurLong(totalDur)} · ${segments.length} segments</p>
+    <div style="display:flex;gap:24px;">
+      <!-- Outline column -->
+      <div style="width:240px;flex-shrink:0;">
+        <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:12px">Outline</h4>`;
 
-  let lastSection = null;
   segments.forEach((seg, i) => {
-    const sectionName = seg.section_name || '';
-    if (sectionName && sectionName !== lastSection) {
-      html += `<h3 style="font-size:15px;font-weight:700;color:var(--accent);margin:28px 0 12px;text-transform:uppercase;letter-spacing:0.5px">${escHtml(sectionName)}</h3>`;
-      lastSection = sectionName;
-    }
-    const text = seg.transcript_text || seg.notes || '';
-    if (text.trim()) {
-      html += `<p style="font-size:15px;line-height:1.8;color:var(--text);margin-bottom:12px;cursor:pointer" 
-        onclick="this.classList.toggle('seg-selected')" 
-        title="${escHtml(seg.filename||'')} [${fmtDur(seg.start_time)} → ${fmtDur(seg.end_time)}]">${escHtml(text)}</p>`;
-    }
+    html += `<div style="padding:8px 10px;margin-bottom:4px;border-radius:6px;cursor:pointer;border-left:3px solid var(--accent);background:var(--surface);font-size:12px" onclick="scrollToSegText(${i})">
+      <div style="font-weight:600;color:var(--text);margin-bottom:2px">${escHtml(seg.section_name || 'Section '+(i+1))}</div>
+      <div style="color:var(--text3)">${escHtml(seg.filename||'')} · ${fmtDur(seg.start_time)}→${fmtDur(seg.end_time)}</div>
+    </div>`;
   });
 
-  html += `</div>`;
+  html += `</div>
+      <!-- Full text column -->
+      <div style="flex:1;min-width:0;">
+        <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:12px">Full Script</h4>`;
+
+  segments.forEach((seg, i) => {
+    const text = seg.transcript_text || seg.notes || '';
+    html += `<div id="seg-text-${i}" style="margin-bottom:20px;padding:16px;background:var(--doc-bg, #1e2235);border-radius:8px;border-left:3px solid var(--accent)">
+      <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">${escHtml(seg.section_name || 'Section '+(i+1))}</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">${escHtml(seg.filename||'')} [${fmtDur(seg.start_time)} → ${fmtDur(seg.end_time)}]</div>
+      <p style="font-size:15px;line-height:1.8;color:var(--text);margin:0">${escHtml(text) || '<em style="color:var(--text3)">No transcript text for this segment</em>'}</p>
+    </div>`;
+  });
+
+  html += `</div></div></div>`;
   inner.innerHTML = html;
-  inner.style.background = 'var(--doc-bg, #1e2235)';
   inner.style.overflowY = 'auto';
   $('#scriptActions').style.display = 'flex';
+}
+
+function scrollToSegText(idx) {
+  const el = document.getElementById('seg-text-' + idx);
+  if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 async function updateSectionName(idx, name) {

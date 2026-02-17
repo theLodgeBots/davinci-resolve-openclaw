@@ -208,8 +208,27 @@ def get_script(db_path, script_id):
         JOIN clips c ON ss.clip_id = c.id
         WHERE ss.script_id=? ORDER BY ss.order_index
     """, (script_id,)).fetchall()
+    
+    # Enrich each segment with actual transcript text from that time range
+    result_segments = []
+    for seg in segments:
+        seg_dict = dict(seg)
+        # Find transcript segments that overlap with this script segment's time range
+        ts = conn.execute("""
+            SELECT text, start_time, end_time FROM transcript_segments
+            WHERE clip_id=? AND end_time > ? AND start_time < ?
+            ORDER BY start_time
+        """, (seg_dict['clip_id'], seg_dict['start_time'], seg_dict['end_time'])).fetchall()
+        if ts:
+            seg_dict['transcript_text'] = ' '.join(row['text'] for row in ts)
+        else:
+            # Fallback: get full clip transcript
+            t = conn.execute("SELECT full_text FROM transcripts WHERE clip_id=?", (seg_dict['clip_id'],)).fetchone()
+            seg_dict['transcript_text'] = t['full_text'] if t else seg_dict.get('notes', '')
+        result_segments.append(seg_dict)
+    
     conn.close()
-    return {'script': dict(s), 'segments': [dict(seg) for seg in segments]}
+    return {'script': dict(s), 'segments': result_segments}
 
 
 def update_script(db_path, script_id, **kwargs):
