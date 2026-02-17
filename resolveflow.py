@@ -589,7 +589,7 @@ def ai_request(prompt, system="You are a professional video editor.", model="gpt
     return result['choices'][0]['message']['content']
 
 
-def do_ai_auto_edit(target_duration=120, style="highlight reel", clip_ids=None, script_id=None):
+def do_ai_auto_edit(target_duration=120, style="highlight reel", clip_ids=None, script_id=None, user_script_name=None):
     """Generate an AI edit plan from transcripts. If clip_ids provided, only use those clips."""
     # Collect all clips and transcripts
     all_clips = db.get_all_clips(DB_PATH)
@@ -732,8 +732,9 @@ CRITICAL RULES:
         edit_plan['sections'] = sections
 
         # Create script and segments in DB (or use existing script_id)
+        # User-provided name takes priority over AI-generated name
         # Ensure unique script name by appending timestamp if name already exists
-        base_name = edit_plan.get('name', f'{style.title()} - {duration_desc}')
+        base_name = user_script_name or edit_plan.get('name', f'{style.title()} - {duration_desc}')
         existing_scripts = db.get_all_scripts(DB_PATH)
         existing_names = {s['name'] for s in existing_scripts}
         script_name = base_name
@@ -1416,7 +1417,8 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             style = body.get('style', 'highlight reel')
             clip_ids = body.get('clip_ids')
             script_id = body.get('script_id')
-            result = do_ai_auto_edit(target_duration, style, clip_ids=clip_ids, script_id=script_id)
+            user_script_name = body.get('script_name')
+            result = do_ai_auto_edit(target_duration, style, clip_ids=clip_ids, script_id=script_id, user_script_name=user_script_name)
             self.send_json(result)
 
         elif re.match(r'/api/export/resolve/(\d+)$', path) and method == 'POST':
