@@ -605,6 +605,115 @@ Rules:
         return {'error': str(e)}
 
 
+def do_ai_refine(script_id, user_feedback):
+    """Refine an existing script using AI — pick better segments, improve coherence."""
+    script_data = db.get_script(DB_PATH, script_id)
+    if not script_data:
+        return {'error': 'Script not found'}
+
+    script = script_data['script']
+    segments = script_data['segments']
+    
+    # Get ALL available transcripts for the AI to pick from
+    all_segments = db.get_full_transcript(DB_PATH)
+    all_clips = db.get_all_clips(DB_PATH)
+    
+    # Build current script text
+    current_script = []
+    for seg in segments:
+        current_script.append(f"Section: {seg.get('section_name','')}\n"
+                              f"Clip: {seg.get('filename','')} [{seg.get('start_time',0):.1f}s → {seg.get('end_time',0):.1f}s]\n"
+                              f"Text: {seg.get('transcript_text','')}")
+    
+    # Build full available transcript
+    clip_transcripts = {}
+    for s in all_segments:
+        cid = s['clip_id']
+        if cid not in clip_transcripts:
+            clip_transcripts[cid] = []
+        clip_transcripts[cid].append(s)
+    
+    available_text = []
+    fname_to_id = {}
+    for c in all_clips:
+        fname_to_id[c['filename']] = c['id']
+        segs = clip_transcripts.get(c['id'], [])
+        if segs:
+            lines = [f"  [{s['start_time']:.1f}s-{s['end_time']:.1f}s] {s['text']}" for s in segs]
+            available_text.append(f"Clip: {c['filename']} (ID: {c['id']}, Duration: {c.get('duration_seconds',0):.1f}s)\n" + "\n".join(lines))
+    
+    target_dur = script.get('target_duration_seconds', 60)
+    
+    prompt = f"""You are a professional video editor refining a rough edit. The current script has coherence issues.
+
+CURRENT SCRIPT (needs improvement):
+{chr(10).join(current_script)}
+
+FULL AVAILABLE TRANSCRIPTS (you can pick different/better segments from these):
+{chr(10).join(available_text)}
+
+USER FEEDBACK: {user_feedback or "Make this script more coherent and flow better. Pick segments that connect naturally."}
+
+TARGET DURATION: ~{target_dur} seconds
+
+RULES:
+- You can ONLY use text that exists in the transcripts above — never invent dialog
+- Pick segments that flow naturally together and tell a coherent story
+- You can use different segments, adjust start/end times, reorder sections
+- Each segment must reference a real clip_id and real timecodes from the transcripts
+- Keep approximately the same target duration
+
+Return ONLY a JSON object (no markdown) with this structure:
+{{
+  "sections": [
+    {{
+      "section_name": "Opening",
+      "clip_id": 24,
+      "clip_filename": "C0021.MP4",
+      "start_time": 5.2,
+      "end_time": 18.7,
+      "notes": "Why this segment works here"
+    }}
+  ]
+}}"""
+
+    try:
+        result = ai_request(prompt, temperature=0.5)
+        cleaned = result.strip()
+        if cleaned.startswith('```'):
+            cleaned = re.sub(r'^```(?:json)?\s*', '', cleaned)
+            cleaned = re.sub(r'\s*```$', '', cleaned)
+        
+        edit_plan = json.loads(cleaned)
+        sections = edit_plan.get('sections', [])
+        
+        # Clear existing segments and replace with refined ones
+        conn = db.get_db(DB_PATH)
+        conn.execute("DELETE FROM script_segments WHERE script_id=?", (script_id,))
+        conn.execute("UPDATE scripts SET updated_at=CURRENT_TIMESTAMP WHERE id=?", (script_id,))
+        conn.commit()
+        conn.close()
+        
+        for i, sec in enumerate(sections):
+            clip_id = sec.get('clip_id')
+            if not clip_id and sec.get('clip_filename'):
+                clip_id = fname_to_id.get(sec['clip_filename'])
+            if not clip_id:
+                continue
+            db.add_script_segment(DB_PATH, script_id, clip_id,
+                sec.get('start_time', 0), sec.get('end_time', 10),
+                sec.get('section_name', f'Section {i+1}'),
+                i, sec.get('notes', ''), 'cut')
+        
+        # Return the updated script
+        return db.get_script(DB_PATH, script_id)
+    
+    except json.JSONDecodeError as e:
+        return {'error': f'Failed to parse AI response: {e}', 'raw': result}
+    except Exception as e:
+        return {'error': str(e)}
+
+
 def do_export_to_resolve(script_id):
     """Push a script to DaVinci Resolve as a new timeline."""
     resolve = get_resolve()
@@ -892,6 +1001,16 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
                 self.send_json({'suggestions': result})
             except Exception as e:
                 self.send_json({'error': str(e)})
+
+        elif path == '/api/ai/refine' and method == 'POST':
+            body = self.read_body()
+            script_id = body.get('script_id')
+            user_feedback = body.get('feedback', '')
+            if not script_id:
+                self.send_json({'error': 'script_id required'})
+                return
+            result = do_ai_refine(script_id, user_feedback)
+            self.send_json(result)
 
         elif path == '/api/ai/auto-edit' and method == 'POST':
             body = self.read_body()

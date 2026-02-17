@@ -337,7 +337,19 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
           <p>Select clips on the left and generate a script with AI,<br>or choose an existing script above.</p>
         </div>
       </div>
+      <!-- AI Refine Chat -->
+      <div id="refinePanel" style="display:none;border-top:1px solid var(--border);padding:16px 24px;background:var(--surface)">
+        <h4 style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)">💬 Refine with AI</h4>
+        <div id="refineChat" style="max-height:200px;overflow-y:auto;margin-bottom:10px;font-size:13px;line-height:1.6"></div>
+        <div style="display:flex;gap:8px">
+          <input id="refineInput" type="text" placeholder="e.g. Make it flow better, find a stronger opening, cut the ending..." 
+            style="flex:1;padding:10px 14px;font-size:13px" onkeydown="if(event.key==='Enter')refineScript()">
+          <button class="btn btn-primary" onclick="refineScript()" id="refineBtn">Refine</button>
+        </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--text3)">AI will pick better segments from your clips to improve coherence. It won't make up new dialog.</div>
+      </div>
       <div class="script-actions" id="scriptActions" style="display:none">
+        <button class="btn btn-secondary" onclick="toggleRefine()">💬 Refine with AI</button>
         <div style="flex:1"></div>
         <button class="btn btn-green btn-lg" onclick="openInTimeline()">Open in Timeline →</button>
       </div>
@@ -712,6 +724,53 @@ function renderScript(data) {
 function scrollToSegText(idx) {
   const el = document.getElementById('seg-text-' + idx);
   if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function toggleRefine() {
+  const p = $('#refinePanel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  if (p.style.display === 'block') $('#refineInput').focus();
+}
+
+async function refineScript() {
+  if (!S.currentScriptData) return;
+  const input = $('#refineInput');
+  const feedback = input.value.trim();
+  if (!feedback) return;
+  
+  const chat = $('#refineChat');
+  chat.innerHTML += `<div style="margin-bottom:8px"><strong style="color:var(--text)">You:</strong> <span style="color:var(--text2)">${escHtml(feedback)}</span></div>`;
+  chat.innerHTML += `<div style="margin-bottom:8px;color:var(--accent)" id="refineLoading">⏳ AI is refining the script...</div>`;
+  chat.scrollTop = chat.scrollHeight;
+  input.value = '';
+  $('#refineBtn').disabled = true;
+  
+  try {
+    const res = await fetch('/api/ai/refine', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({script_id: S.currentScriptData.script.id, feedback})
+    });
+    const data = await res.json();
+    const loading = $('#refineLoading');
+    if (loading) loading.remove();
+    
+    if (data.error) {
+      chat.innerHTML += `<div style="margin-bottom:8px;color:var(--accent)">❌ ${escHtml(data.error)}</div>`;
+    } else {
+      const segCount = (data.segments||[]).length;
+      const dur = (data.segments||[]).reduce((a,s) => a + ((s.end_time||0)-(s.start_time||0)), 0);
+      chat.innerHTML += `<div style="margin-bottom:8px"><strong style="color:var(--green)">AI:</strong> <span style="color:var(--text2)">Script refined — ${segCount} segments, ${fmtDurLong(dur)}. Check the updated script above.</span></div>`;
+      S.currentScriptData = data;
+      renderScript(data);
+    }
+  } catch(e) {
+    const loading = $('#refineLoading');
+    if (loading) loading.remove();
+    chat.innerHTML += `<div style="margin-bottom:8px;color:var(--accent)">❌ ${e.message}</div>`;
+  }
+  chat.scrollTop = chat.scrollHeight;
+  $('#refineBtn').disabled = false;
 }
 
 async function updateSectionName(idx, name) {
