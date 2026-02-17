@@ -732,39 +732,111 @@ function scrollToSegText(idx) {
   if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
-function toggleWord(el) {
-  el.classList.toggle('word-cut');
-  if (el.classList.contains('word-cut')) {
-    el.style.textDecoration = 'line-through';
-    el.style.opacity = '0.3';
-    el.style.background = 'rgba(233,69,96,0.15)';
-  } else {
-    el.style.textDecoration = '';
-    el.style.opacity = '';
-    el.style.background = '';
-  }
+// Word selection and editing
+function cutWord(el) {
+  el.classList.add('word-cut');
+  el.style.textDecoration = 'line-through';
+  el.style.opacity = '0.3';
+  el.style.background = 'rgba(233,69,96,0.15)';
+  el.classList.remove('word-selected');
+  el.style.outline = '';
+}
+function restoreWord(el) {
+  el.classList.remove('word-cut');
+  el.style.textDecoration = '';
+  el.style.opacity = '';
+  el.style.background = '';
+}
+function selectWord(el) {
+  el.classList.add('word-selected');
+  el.style.background = 'rgba(78,204,163,0.25)';
+  el.style.borderRadius = '2px';
+}
+function deselectWord(el) {
+  el.classList.remove('word-selected');
+  el.style.background = el.classList.contains('word-cut') ? 'rgba(233,69,96,0.15)' : '';
+}
+function clearSelection() {
+  document.querySelectorAll('.word-selected').forEach(deselectWord);
+  hideWordMenu();
 }
 
-// Allow drag-select multiple words
-let isDragging = false;
-let dragMode = null; // 'cut' or 'restore'
-document.addEventListener('mousedown', (e) => {
-  if (e.target.classList?.contains('script-word')) {
-    isDragging = true;
-    dragMode = e.target.classList.contains('word-cut') ? 'restore' : 'cut';
-    toggleWord(e.target);
-    e.preventDefault();
+// Floating menu
+function showWordMenu() {
+  let menu = $('#wordMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'wordMenu';
+    menu.style.cssText = 'position:fixed;z-index:999;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px;display:none;box-shadow:0 8px 24px #0006;gap:4px;display:flex';
+    menu.innerHTML = `
+      <button class="btn btn-small" style="background:var(--accent);color:#fff;font-size:12px;padding:6px 14px" onclick="cutSelected()">✂️ Cut</button>
+      <button class="btn btn-small" style="background:var(--bg3);color:var(--text);font-size:12px;padding:6px 14px" onclick="clearSelection()">Cancel</button>
+    `;
+    document.body.appendChild(menu);
   }
+  // Position near selection
+  const selected = document.querySelectorAll('.word-selected');
+  if (selected.length) {
+    const last = selected[selected.length - 1];
+    const rect = last.getBoundingClientRect();
+    menu.style.display = 'flex';
+    menu.style.top = (rect.top - 40) + 'px';
+    menu.style.left = Math.min(rect.left, window.innerWidth - 160) + 'px';
+  }
+}
+function hideWordMenu() {
+  const menu = $('#wordMenu');
+  if (menu) menu.style.display = 'none';
+}
+function cutSelected() {
+  document.querySelectorAll('.word-selected').forEach(cutWord);
+  hideWordMenu();
+}
+
+// Mouse interaction for text selection
+let isSelecting = false;
+document.addEventListener('mousedown', (e) => {
+  const w = e.target.closest?.('.script-word');
+  if (!w) { clearSelection(); return; }
+  if (w.classList.contains('word-cut')) return; // handled by hover restore
+  isSelecting = true;
+  clearSelection();
+  selectWord(w);
+  e.preventDefault();
 });
 document.addEventListener('mouseover', (e) => {
-  if (isDragging && e.target.classList?.contains('script-word')) {
-    const isCut = e.target.classList.contains('word-cut');
-    if ((dragMode === 'cut' && !isCut) || (dragMode === 'restore' && isCut)) {
-      toggleWord(e.target);
-    }
+  const w = e.target.closest?.('.script-word');
+  if (!w) return;
+  // Show restore tooltip on hover over cut words
+  if (w.classList.contains('word-cut') && !isSelecting) {
+    w.style.opacity = '0.6';
+    w.style.cursor = 'pointer';
+    w.title = 'Click to restore';
+    return;
+  }
+  if (isSelecting && !w.classList.contains('word-cut')) {
+    selectWord(w);
   }
 });
-document.addEventListener('mouseup', () => { isDragging = false; });
+document.addEventListener('mouseout', (e) => {
+  const w = e.target.closest?.('.script-word');
+  if (w && w.classList.contains('word-cut') && !w.classList.contains('word-selected')) {
+    w.style.opacity = '0.3';
+    w.title = '';
+  }
+});
+document.addEventListener('mouseup', (e) => {
+  if (isSelecting) {
+    isSelecting = false;
+    const selected = document.querySelectorAll('.word-selected');
+    if (selected.length > 0) showWordMenu();
+  }
+  // Click on cut word to restore
+  const w = e.target.closest?.('.script-word');
+  if (w && w.classList.contains('word-cut') && !document.querySelectorAll('.word-selected').length) {
+    restoreWord(w);
+  }
+});
 
 function toggleRefine() {
   const p = $('#refinePanel');
