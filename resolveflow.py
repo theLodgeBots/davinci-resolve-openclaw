@@ -732,7 +732,15 @@ CRITICAL RULES:
         edit_plan['sections'] = sections
 
         # Create script and segments in DB (or use existing script_id)
-        script_name = edit_plan.get('name', f'{style.title()} - {duration_desc}')
+        # Ensure unique script name by appending timestamp if name already exists
+        base_name = edit_plan.get('name', f'{style.title()} - {duration_desc}')
+        existing_scripts = db.get_all_scripts(DB_PATH)
+        existing_names = {s['name'] for s in existing_scripts}
+        script_name = base_name
+        if script_name in existing_names and not script_id:
+            from datetime import datetime
+            ts = datetime.now().strftime('%b %d %I:%M%p')
+            script_name = f"{base_name} ({ts})"
         if script_id:
             # Clear existing segments and update the script
             conn = db.get_db(DB_PATH)
