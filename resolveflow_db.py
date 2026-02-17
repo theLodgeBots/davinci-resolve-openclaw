@@ -223,9 +223,11 @@ def get_script(db_path, script_id):
         seg_dict = dict(seg)
         # Find transcript segments that overlap with this script segment's time range
         # Only include text that falls within the edit's in/out points
+        # Use midpoint overlap: include a transcript segment only if its midpoint
+        # falls within the script segment's time range (avoids boundary bleeding)
         ts = conn.execute("""
             SELECT text, start_time, end_time FROM transcript_segments
-            WHERE clip_id=? AND end_time > ? AND start_time < ?
+            WHERE clip_id=? AND (start_time + end_time) / 2.0 >= ? AND (start_time + end_time) / 2.0 <= ?
             ORDER BY start_time
         """, (seg_dict['clip_id'], seg_dict['start_time'], seg_dict['end_time'])).fetchall()
         if ts:

@@ -657,6 +657,7 @@ Create a compelling edit plan. Return ONLY a JSON object (no markdown, no explan
 }}
 
 Rules:
+- ONLY use segments with STRONG, CLEAR, ON-TOPIC speech. Every second of the edit should have someone saying something meaningful. No filler, no dead air, no background noise sections, no false starts, no "um" segments.
 - Pick the best soundbites and create a narrative arc
 - CRITICAL: Total duration of ALL sections combined MUST be approximately {target_duration} seconds. Add up (end_time - start_time) for each section and verify the total is close to {target_duration}. If too short, include more/longer segments. If too long, trim segments.
 - start_time and end_time must be within the clip's actual transcript timecodes
@@ -664,10 +665,11 @@ Rules:
 - Ensure smooth flow between sections
 - Each section should have a descriptive section_name
 - Include enough sections to fill the target duration — typically 6-12 sections for a 60 second video
-- Prefer longer segments (8-15 seconds each) over very short ones
-- ONLY select segments where the speaker is saying something coherent and on-topic. Skip casual chatter, false starts, or behind-the-scenes talk.
-- The "notes" field is for YOUR editing notes — it should describe why you chose this segment, NOT be the script text. The actual transcript text will be pulled from the timecodes you specify.
-- Make sure start_time and end_time precisely match meaningful sentences in the transcript — don't cut mid-sentence"""
+- Prefer longer segments (8-15 seconds each) over very short ones — tightly packed with speech
+- Skip clips with very short or incoherent transcripts (a few words only)
+- The "notes" field is for YOUR editing notes — it should describe why you chose this segment, NOT be the script text
+- Make sure start_time and end_time precisely match meaningful sentences in the transcript — don't cut mid-sentence
+- Verify: every selected time range should have continuous, substantive speech in the transcript"""
 
     try:
         result = ai_request(prompt, temperature=0.5)
@@ -696,11 +698,17 @@ Rules:
 
         sections = edit_plan.get('sections', [])
         for i, sec in enumerate(sections):
-            clip_id = sec.get('clip_id')
-            # If clip_id not provided, try to find by filename
-            if not clip_id and sec.get('clip_filename'):
+            # Always resolve by filename first (AI often confuses clip IDs)
+            clip_id = None
+            if sec.get('clip_filename'):
                 clip_id = fname_to_id.get(sec['clip_filename'])
             if not clip_id:
+                clip_id = sec.get('clip_id')
+                # Verify this clip_id actually exists
+                if clip_id and not any(c['id'] == clip_id for c in all_clips):
+                    clip_id = None
+            if not clip_id:
+                print(f"  Skipping section '{sec.get('section_name')}': unknown clip", flush=True)
                 continue
 
             db.add_script_segment(
@@ -869,14 +877,26 @@ def do_export_to_resolve(script_id):
             except Exception:
                 pass
 
-        # Create new empty timeline
+        # Create new timeline with unique name (avoid appending to existing)
         tl_name = script['name']
-        pool.CreateEmptyTimeline(tl_name)
+        existing_names = set()
+        for i in range(1, proj.GetTimelineCount() + 1):
+            tl = proj.GetTimelineByIndex(i)
+            if tl:
+                existing_names.add(tl.GetName())
+
+        final_name = tl_name
+        counter = 2
+        while final_name in existing_names:
+            final_name = f"{tl_name} ({counter})"
+            counter += 1
+
+        pool.CreateEmptyTimeline(final_name)
         new_tl = proj.GetCurrentTimeline()
-        if not new_tl:
+        if not new_tl or new_tl.GetName() != final_name:
             return {'error': 'Failed to create timeline'}
 
-        # Get source FPS for each clip (may differ from timeline FPS)
+        # Get source FPS for each clip
         clip_fps = {}
         for rc in resolve_clips:
             try:
@@ -884,7 +904,6 @@ def do_export_to_resolve(script_id):
                 if props:
                     fname = props.get('File Name', '')
                     fps_val = props.get('FPS', '24')
-                    # FPS can be like "59.94" or "29.97" or "24.0"
                     try:
                         clip_fps[fname] = float(str(fps_val).replace(';',''))
                     except:
@@ -896,13 +915,17 @@ def do_export_to_resolve(script_id):
         for seg in segments:
             fname = seg.get('filename')
             if not fname or fname not in fname_to_mpi:
+                print(f"  Skip: {fname} not in media pool", flush=True)
                 continue
 
             mpi = fname_to_mpi[fname]
-            # Use SOURCE clip FPS for frame calculation, not timeline FPS
+            # AppendToTimeline startFrame/endFrame are source-clip-relative
+            # and Resolve handles FPS conversion internally
             src_fps = clip_fps.get(fname, 24.0)
             start_frame = int(seg['start_time'] * src_fps)
             end_frame = int(seg['end_time'] * src_fps)
+
+            print(f"  Adding {fname}: {seg['start_time']:.1f}s-{seg['end_time']:.1f}s (frames {start_frame}-{end_frame} @ {src_fps}fps)", flush=True)
 
             try:
                 result = pool.AppendToTimeline([{
@@ -912,12 +935,22 @@ def do_export_to_resolve(script_id):
                 }])
                 if result:
                     added += 1
+                else:
+                    print(f"  Warning: AppendToTimeline returned falsy for {fname}", flush=True)
             except Exception as e:
-                print(f"  Error adding {fname} to timeline: {e}")
+                print(f"  Error adding {fname} to timeline: {e}", flush=True)
+
+        # Transcribe the new timeline so subtitles appear in Resolve
+        print(f"  Timeline created with {added} segments. Triggering transcription...", flush=True)
+        try:
+            new_tl.CreateSubtitlesFromAudio()
+            print(f"  Transcription started for timeline '{final_name}'", flush=True)
+        except Exception as e:
+            print(f"  Could not start timeline transcription: {e}", flush=True)
 
         return {
             'success': True,
-            'timeline_name': tl_name,
+            'timeline_name': final_name,
             'segments_added': added,
             'total_segments': len(segments)
         }
