@@ -87,6 +87,9 @@ def init_db(db_path):
         conn.execute("ALTER TABLE clips ADD COLUMN ai_title TEXT")
     if 'ai_summary' not in cols:
         conn.execute("ALTER TABLE clips ADD COLUMN ai_summary TEXT")
+    seg_cols = {r[1] for r in conn.execute("PRAGMA table_info(script_segments)").fetchall()}
+    if 'cut_words' not in seg_cols:
+        conn.execute("ALTER TABLE script_segments ADD COLUMN cut_words TEXT DEFAULT '[]'")
     conn.commit()
     conn.close()
 
@@ -312,7 +315,7 @@ def add_script_segment(db_path, script_id, clip_id, start_time, end_time,
 
 def update_script_segment(db_path, script_id, seg_id, **kwargs):
     conn = get_db(db_path)
-    allowed = {'start_time', 'end_time', 'section_name', 'order_index', 'notes', 'transition', 'clip_id'}
+    allowed = {'start_time', 'end_time', 'section_name', 'order_index', 'notes', 'transition', 'clip_id', 'cut_words'}
     sets = []
     vals = []
     for k, v in kwargs.items():

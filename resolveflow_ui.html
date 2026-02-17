@@ -777,10 +777,14 @@ function renderScript(data) {
     const text = seg.transcript_text || '';
     if (text.trim()) {
       // Wrap each word in a span for selection/removal
+      const cutWords = new Set(JSON.parse(seg.cut_words || '[]'));
       const words = text.split(/(\s+)/);
       const wordHtml = words.map((w, wi) => {
         if (/^\s+$/.test(w)) return w;
-        return `<span class="script-word" data-seg="${i}" data-wi="${wi}" onclick="toggleWord(this)" style="cursor:pointer;border-radius:2px;padding:0 1px;transition:all .15s">${escHtml(w)}</span>`;
+        const isCut = cutWords.has(wi);
+        const cutStyle = isCut ? 'text-decoration:line-through;opacity:0.3;background:rgba(233,69,96,0.15);' : '';
+        const cutClass = isCut ? ' word-cut' : '';
+        return `<span class="script-word${cutClass}" data-seg="${i}" data-wi="${wi}" style="cursor:pointer;border-radius:2px;padding:0 1px;transition:all .15s;${cutStyle}">${escHtml(w)}</span>`;
       }).join('');
       html += `<div id="seg-text-${i}" style="margin-bottom:16px;padding:16px 20px;background:var(--doc-bg, #1e2235);border-radius:8px;border-left:3px solid ${color}">
         <p style="font-size:15px;line-height:1.8;color:var(--text);margin:0">${wordHtml}</p>
@@ -807,12 +811,32 @@ function cutWord(el) {
   el.style.background = 'rgba(233,69,96,0.15)';
   el.classList.remove('word-selected');
   el.style.outline = '';
+  saveCutWords(el.dataset.seg);
 }
 function restoreWord(el) {
   el.classList.remove('word-cut');
   el.style.textDecoration = '';
   el.style.opacity = '';
   el.style.background = '';
+  saveCutWords(el.dataset.seg);
+}
+
+async function saveCutWords(segIdx) {
+  if (!S.currentScript || !S.currentScriptData) return;
+  const seg = S.currentScriptData.segments[segIdx];
+  if (!seg) return;
+  // Collect cut word indices for this segment
+  const cutIndices = [];
+  document.querySelectorAll(`.script-word[data-seg="${segIdx}"].word-cut`).forEach(el => {
+    cutIndices.push(parseInt(el.dataset.wi));
+  });
+  try {
+    await fetch(`/api/script/${S.currentScript}/segment/${seg.id}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({cut_words: JSON.stringify(cutIndices)})
+    });
+  } catch(e) { console.error('Failed to save cuts', e); }
 }
 function selectWord(el) {
   el.classList.add('word-selected');
