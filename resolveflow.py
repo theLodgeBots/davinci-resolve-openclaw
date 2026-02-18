@@ -906,7 +906,10 @@ RULES:
 - Pick segments that flow naturally together and tell a coherent story
 - You can use different segments, adjust start/end times, reorder sections
 - Each segment must reference a real clip_id and real timecodes from the transcripts
-- Keep approximately the same target duration
+- **DURATION: The refined edit MUST stay within ±15% of {target_dur}s (between {int(target_dur*0.85)}s and {int(target_dur*1.15)}s). Redistribute time across sections rather than simply removing them.**
+- **Every segment must start and end at a complete sentence boundary. Never cut mid-thought or mid-sentence.**
+- **Preserve narrative balance: cover multiple angles/themes. If removing a section, ensure the remaining content still tells a complete story.**
+- Each segment should be 4-20 seconds long. Include at least 4 segments.
 
 Return ONLY a JSON object (no markdown) with this structure:
 {{
