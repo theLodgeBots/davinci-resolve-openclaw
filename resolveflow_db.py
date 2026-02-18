@@ -260,9 +260,8 @@ def get_script(db_path, script_id):
             if ts_mid:
                 seg_dict['transcript_text'] = ' '.join(row['text'] for row in ts_mid)
             else:
-                # Last resort: full clip transcript
-                t = conn.execute("SELECT full_text FROM transcripts WHERE clip_id=?", (seg_dict['clip_id'],)).fetchone()
-                seg_dict['transcript_text'] = t['full_text'] if t else ''
+                # No matching transcript text for this time range
+                seg_dict['transcript_text'] = ''
         result_segments.append(seg_dict)
     
     conn.close()
