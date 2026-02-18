@@ -26,6 +26,11 @@ _transcription_progress = {'running': False, 'current': '', 'done': 0, 'total': 
 
 UI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resolveflow_ui.html')
 
+# App-level config dir (~/.resolveflow/) — stores recents, preferences
+APP_CONFIG_DIR = os.path.join(os.path.expanduser('~'), '.resolveflow')
+os.makedirs(APP_CONFIG_DIR, exist_ok=True)
+RECENTS_PATH = os.path.join(APP_CONFIG_DIR, 'recents.json')
+
 
 def detect_camera(relative_path, filename):
     """Detect camera from path and filename."""
@@ -145,10 +150,9 @@ def open_project(directory):
 
 def _save_recent(directory):
     """Save directory to recents list."""
-    recents_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.resolveflow_recents.json')
     recents = []
     try:
-        with open(recents_file) as f:
+        with open(RECENTS_PATH) as f:
             recents = json.load(f)
     except Exception:
         pass
@@ -157,7 +161,7 @@ def _save_recent(directory):
     recents.insert(0, entry)
     recents = recents[:10]  # Keep last 10
     try:
-        with open(recents_file, 'w') as f:
+        with open(RECENTS_PATH, 'w') as f:
             json.dump(recents, f)
     except Exception:
         pass
@@ -1238,9 +1242,8 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
 
         # Recent projects list
         if path == '/api/projects/recent' and method == 'GET':
-            recents_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.resolveflow_recents.json')
             try:
-                with open(recents_file) as f:
+                with open(RECENTS_PATH) as f:
                     self.send_json(json.load(f))
             except Exception:
                 self.send_json([])

@@ -1,89 +1,80 @@
-# DaVinci Resolve OpenClaw
+# ResolveFlow
 
-AI-powered video editing pipeline using DaVinci Resolve Studio. A local alternative to Riverside/Descript — drop a folder of videos, get an edited project.
+AI video script editor built on DaVinci Resolve Studio.
 
-## What This Does
+Think Descript — but using Resolve's native transcription, with AI-powered script generation and word-level editing.
 
-1. **Ingest** — Point at a project folder full of raw video clips (multi-camera, multi-source)
-2. **Transcribe** — Whisper transcribes all audio tracks locally
-3. **Analyze** — AI reviews transcripts + video metadata to build an edit plan
-4. **Script** — Generates a structured script with cuts, B-roll placement, and sequencing
-5. **Assemble** — Drives DaVinci Resolve Studio via its Python scripting API to build the timeline
-6. **Review** — You review, tweak, and render
+## How It Works
 
-## Architecture
+1. **Open a folder** of video clips (local drive, external volume, NAS — anywhere)
+2. **Transcribe** using DaVinci Resolve's native API (free, frame-accurate)
+3. **Generate scripts** with AI — pick clips, set duration/style, let it arrange the edit
+4. **Refine** iteratively — word-level cuts, AI chat for revisions
+5. **Export to Resolve** — one click creates a timeline with your edit
 
-```
-┌─────────────────┐     ┌──────────────┐     ┌───────────────┐
-│  Project Folder  │────▶│  Transcriber  │────▶│  Script Engine │
-│  (raw clips)     │     │  (Whisper)    │     │  (LLM)         │
-└─────────────────┘     └──────────────┘     └───────┬───────┘
-                                                      │
-                                                      ▼
-                        ┌──────────────┐     ┌───────────────┐
-                        │  DaVinci     │◀────│  Timeline      │
-                        │  Resolve     │     │  Builder       │
-                        │  Studio      │     │  (Python API)  │
-                        └──────────────┘     └───────────────┘
-```
-
-## Components
-
-### 1. `ingest/` — Media Scanner
-- Scans project folder for video/audio files
-- Extracts metadata (duration, resolution, codec, camera source)
-- Detects multi-cam setups (DJI, Sony, etc.)
-- Generates a manifest JSON
-
-### 2. `transcribe/` — Audio Transcription
-- Extracts audio from video files (ffmpeg)
-- Transcribes via OpenAI Whisper API or local whisper.cpp
-- Word-level timestamps for precise cuts
-- Speaker diarization (future)
-
-### 3. `script/` — AI Script Generator
-- Takes transcripts + metadata as context
-- LLM generates an edit decision list (EDL) with reasoning
-- Identifies key moments, B-roll opportunities, dead air
-- Outputs a structured JSON edit plan
-
-### 4. `resolve/` — DaVinci Resolve Controller
-- Python bridge to DaVinci Resolve Studio scripting API
-- Creates projects, imports media, builds timelines
-- Places clips, sets in/out points, manages tracks
-- Audio sync, markers, and render job management
-
-### 5. `mcp/` — MCP Server (Model Context Protocol)
-- Exposes DaVinci Resolve operations as MCP tools
-- Lets any AI agent control Resolve programmatically
-- Tools: import_media, create_timeline, add_clip, set_marker, render, etc.
+All project data lives inside your video folder at `.resolveflow/` — move the drive to another machine and pick up where you left off.
 
 ## Requirements
 
-- macOS (DaVinci Resolve Studio)
-- Python 3.10+
-- DaVinci Resolve Studio 20+ (free version lacks scripting)
-- ffmpeg
-- OpenAI API key (for Whisper transcription)
-
-## Test Data
-
-`/Volumes/LaCie/VIDEO/nycap-portalcam/` — Multi-camera shoot:
-- `dji/` — 15+ DJI drone clips (aerial, wide shots)
-- `sony/` — 11 Sony camera clips + stills + audio tracks
+- **Python 3.10+** (stdlib only, no pip packages)
+- **DaVinci Resolve Studio** (free version doesn't expose scripting API)
+- **ffmpeg** for speech trimming (`brew install ffmpeg` / `apt install ffmpeg`)
+- **OpenAI API key** for AI script generation
 
 ## Quick Start
 
 ```bash
-# 1. Make sure DaVinci Resolve Studio is running
-# 2. Set environment
-export RESOLVE_SCRIPT_API="/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting"
-export RESOLVE_SCRIPT_LIB="/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so"
-export PYTHONPATH="$PYTHONPATH:$RESOLVE_SCRIPT_API/Modules/"
+# Set your OpenAI key
+export OPENAI_API_KEY="sk-..."
 
-# 3. Run the pipeline
-python pipeline.py /Volumes/LaCie/VIDEO/nycap-portalcam/
+# Start the server (opens browser automatically)
+python3 resolveflow.py /path/to/your/video/folder
+
+# Or start without auto-opening browser
+python3 resolveflow.py /path/to/your/video/folder --no-browser
+
+# Or start without a folder (pick from the UI)
+python3 resolveflow.py --no-browser
 ```
+
+Server runs on `http://localhost:8080` — accessible from any device on your network.
+
+## Project Structure
+
+```
+resolveflow.py          # Server + API + Resolve integration
+resolveflow_db.py       # SQLite database layer
+resolveflow_ui.html     # Single-file UI (no build step)
+RULES.md                # Core project principles
+```
+
+## Data Layout
+
+```
+~/.resolveflow/             # App config (recents, preferences)
+  recents.json
+
+/your/video/folder/         # Your video project
+  *.mp4, *.mov, ...         # Video clips
+  .resolveflow/             # Project data (auto-created)
+    project.db              # SQLite — clips, transcripts, scripts
+    thumbnails/             # Clip thumbnails
+```
+
+Move the video folder (including `.resolveflow/`) to any machine with ResolveFlow installed — all transcripts, scripts, and edits travel with it.
+
+## API
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/clips` | GET | List all clips with metadata |
+| `/api/scripts` | GET | List all scripts |
+| `/api/script/:id` | GET | Get script with segments + transcript text |
+| `/api/ai/auto-edit` | POST | Generate AI script |
+| `/api/ai/refine/:id` | POST | Refine script with feedback |
+| `/api/export/resolve/:id` | POST | Export script to Resolve timeline |
+| `/api/project/open` | POST | Open a project folder |
+| `/api/projects/recent` | GET | List recent projects |
 
 ## License
 
