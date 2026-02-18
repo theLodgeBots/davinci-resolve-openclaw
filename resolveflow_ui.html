@@ -880,7 +880,38 @@ function hideWordMenu() {
   if (menu) menu.style.display = 'none';
 }
 function cutSelected() {
-  document.querySelectorAll('.word-selected').forEach(cutWord);
+  console.log('[CUT] cutSelected called');
+  // First try custom .word-selected
+  let selected = document.querySelectorAll('.word-selected');
+  console.log('[CUT] Custom selected words:', selected.length);
+  
+  // If no custom selection, try native browser selection
+  if (selected.length === 0) {
+    const nativeSel = window.getSelection();
+    console.log('[CUT] Trying native selection, rangeCount:', nativeSel?.rangeCount, 'text:', nativeSel?.toString()?.substring(0, 50));
+    if (nativeSel && nativeSel.rangeCount > 0) {
+      const range = nativeSel.getRangeAt(0);
+      // Find all .script-word spans that are within or intersect the selection range
+      document.querySelectorAll('.script-word').forEach(w => {
+        if (!w.classList.contains('word-cut') && nativeSel.containsNode(w, true)) {
+          selected = [...(selected || [])]; // convert to array if needed
+          selectWord(w);
+        }
+      });
+      selected = document.querySelectorAll('.word-selected');
+      console.log('[CUT] After native selection mapping:', selected.length, 'words');
+      nativeSel.removeAllRanges(); // clear native selection
+    }
+  }
+  
+  if (selected.length === 0) {
+    console.log('[CUT] No words to cut!');
+    hideWordMenu();
+    return;
+  }
+  
+  console.log('[CUT] Cutting', selected.length, 'words:', Array.from(selected).map(w => w.textContent).join(' '));
+  selected.forEach(cutWord);
   hideWordMenu();
 }
 
@@ -889,7 +920,7 @@ let isSelecting = false;
 document.addEventListener('mousedown', (e) => {
   const w = e.target.closest?.('.script-word');
   if (!w) { clearSelection(); return; }
-  if (w.classList.contains('word-cut')) return; // handled by hover restore
+  if (w.classList.contains('word-cut')) return;
   isSelecting = true;
   clearSelection();
   selectWord(w);
@@ -898,7 +929,6 @@ document.addEventListener('mousedown', (e) => {
 document.addEventListener('mouseover', (e) => {
   const w = e.target.closest?.('.script-word');
   if (!w) return;
-  // Show restore tooltip on hover over cut words
   if (w.classList.contains('word-cut') && !isSelecting) {
     w.style.opacity = '0.6';
     w.style.cursor = 'pointer';
@@ -920,7 +950,22 @@ document.addEventListener('mouseup', (e) => {
   if (isSelecting) {
     isSelecting = false;
     const selected = document.querySelectorAll('.word-selected');
+    console.log('[SEL] Custom mouseup, selected:', selected.length);
     if (selected.length > 0) showWordMenu();
+  } else {
+    // Check for native browser selection over script words
+    setTimeout(() => {
+      const nativeSel = window.getSelection();
+      if (nativeSel && nativeSel.toString().trim().length > 0) {
+        // Check if selection is within script text area
+        const anchor = nativeSel.anchorNode?.parentElement?.closest?.('.script-word');
+        const focus = nativeSel.focusNode?.parentElement?.closest?.('.script-word');
+        if (anchor || focus) {
+          console.log('[SEL] Native selection detected over script words:', nativeSel.toString().substring(0, 50));
+          showWordMenu();
+        }
+      }
+    }, 50);
   }
   // Click on cut word to restore
   const w = e.target.closest?.('.script-word');
