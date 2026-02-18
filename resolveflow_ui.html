@@ -852,6 +852,9 @@ function clearSelection() {
   hideWordMenu();
 }
 
+// Pending word elements to cut — stored when menu appears, consumed on Cut click
+let _pendingCutWords = [];
+
 // Floating menu
 function showWordMenu() {
   let menu = $('#wordMenu');
@@ -860,16 +863,36 @@ function showWordMenu() {
     menu.id = 'wordMenu';
     menu.style.cssText = 'position:fixed;z-index:999;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px;display:none;box-shadow:0 8px 24px #0006;gap:4px;display:flex';
     menu.innerHTML = `
-      <button class="btn btn-small" style="background:var(--accent);color:#fff;font-size:12px;padding:6px 14px" onclick="cutSelected()">✂️ Cut</button>
-      <button class="btn btn-small" style="background:var(--bg3);color:var(--text);font-size:12px;padding:6px 14px" onclick="clearSelection()">Cancel</button>
+      <button class="btn btn-small" style="background:var(--accent);color:#fff;font-size:12px;padding:6px 14px" onmousedown="event.preventDefault()" onclick="cutSelected()">✂️ Cut</button>
+      <button class="btn btn-small" style="background:var(--bg3);color:var(--text);font-size:12px;padding:6px 14px" onmousedown="event.preventDefault()" onclick="clearSelection()">Cancel</button>
     `;
     document.body.appendChild(menu);
   }
-  // Position near selection
-  const selected = document.querySelectorAll('.word-selected');
-  if (selected.length) {
-    const last = selected[selected.length - 1];
-    const rect = last.getBoundingClientRect();
+
+  // Capture the words to cut NOW (before any click event can clear them)
+  _pendingCutWords = [];
+
+  // First: custom .word-selected
+  document.querySelectorAll('.word-selected').forEach(w => _pendingCutWords.push(w));
+
+  // Second: if no custom selection, capture from native browser selection
+  if (_pendingCutWords.length === 0) {
+    const nativeSel = window.getSelection();
+    if (nativeSel && nativeSel.toString().trim().length > 0) {
+      document.querySelectorAll('.script-word').forEach(w => {
+        if (!w.classList.contains('word-cut') && nativeSel.containsNode(w, true)) {
+          _pendingCutWords.push(w);
+        }
+      });
+    }
+  }
+
+  console.log('[MENU] Showing menu with', _pendingCutWords.length, 'pending words:', _pendingCutWords.map(w => w.textContent).join(' '));
+
+  // Position near the last selected word
+  const posRef = _pendingCutWords[_pendingCutWords.length - 1] || document.querySelector('.word-selected');
+  if (posRef) {
+    const rect = posRef.getBoundingClientRect();
     menu.style.display = 'flex';
     menu.style.top = (rect.top - 40) + 'px';
     menu.style.left = Math.min(rect.left, window.innerWidth - 160) + 'px';
@@ -878,46 +901,29 @@ function showWordMenu() {
 function hideWordMenu() {
   const menu = $('#wordMenu');
   if (menu) menu.style.display = 'none';
+  _pendingCutWords = [];
 }
 function cutSelected() {
-  console.log('[CUT] cutSelected called');
-  // First try custom .word-selected
-  let selected = document.querySelectorAll('.word-selected');
-  console.log('[CUT] Custom selected words:', selected.length);
-  
-  // If no custom selection, try native browser selection
-  if (selected.length === 0) {
-    const nativeSel = window.getSelection();
-    console.log('[CUT] Trying native selection, rangeCount:', nativeSel?.rangeCount, 'text:', nativeSel?.toString()?.substring(0, 50));
-    if (nativeSel && nativeSel.rangeCount > 0) {
-      const range = nativeSel.getRangeAt(0);
-      // Find all .script-word spans that are within or intersect the selection range
-      document.querySelectorAll('.script-word').forEach(w => {
-        if (!w.classList.contains('word-cut') && nativeSel.containsNode(w, true)) {
-          selected = [...(selected || [])]; // convert to array if needed
-          selectWord(w);
-        }
-      });
-      selected = document.querySelectorAll('.word-selected');
-      console.log('[CUT] After native selection mapping:', selected.length, 'words');
-      nativeSel.removeAllRanges(); // clear native selection
-    }
-  }
-  
-  if (selected.length === 0) {
+  console.log('[CUT] cutSelected called, pending words:', _pendingCutWords.length);
+
+  if (_pendingCutWords.length === 0) {
     console.log('[CUT] No words to cut!');
     hideWordMenu();
     return;
   }
-  
-  console.log('[CUT] Cutting', selected.length, 'words:', Array.from(selected).map(w => w.textContent).join(' '));
-  selected.forEach(cutWord);
+
+  console.log('[CUT] Cutting', _pendingCutWords.length, 'words:', _pendingCutWords.map(w => w.textContent).join(' '));
+  _pendingCutWords.forEach(cutWord);
+  window.getSelection()?.removeAllRanges(); // clear native selection
+  _pendingCutWords = [];
   hideWordMenu();
 }
 
 // Mouse interaction for text selection
 let isSelecting = false;
 document.addEventListener('mousedown', (e) => {
+  // Don't clear selection when clicking the word menu buttons
+  if (e.target.closest?.('#wordMenu')) return;
   const w = e.target.closest?.('.script-word');
   if (!w) { clearSelection(); return; }
   if (w.classList.contains('word-cut')) return;
@@ -957,10 +963,14 @@ document.addEventListener('mouseup', (e) => {
     setTimeout(() => {
       const nativeSel = window.getSelection();
       if (nativeSel && nativeSel.toString().trim().length > 0) {
-        // Check if selection is within script text area
-        const anchor = nativeSel.anchorNode?.parentElement?.closest?.('.script-word');
-        const focus = nativeSel.focusNode?.parentElement?.closest?.('.script-word');
-        if (anchor || focus) {
+        // Check if any script-word spans are within the native selection
+        let hasScriptWords = false;
+        document.querySelectorAll('.script-word').forEach(w => {
+          if (!w.classList.contains('word-cut') && nativeSel.containsNode(w, true)) {
+            hasScriptWords = true;
+          }
+        });
+        if (hasScriptWords) {
           console.log('[SEL] Native selection detected over script words:', nativeSel.toString().substring(0, 50));
           showWordMenu();
         }
