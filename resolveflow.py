@@ -718,6 +718,35 @@ CRITICAL RULES:
             valid_sections.append(s)
         sections = valid_sections
 
+        # Remove overlapping same-clip segments (keep the longer one)
+        deduped = []
+        for s in sections:
+            fname = s.get('clip_filename', '')
+            s_start, s_end = s.get('start_time', 0), s.get('end_time', 0)
+            overlap_found = False
+            for existing in deduped:
+                if existing.get('clip_filename', '') == fname:
+                    e_start, e_end = existing.get('start_time', 0), existing.get('end_time', 0)
+                    # Check for overlap
+                    overlap = min(s_end, e_end) - max(s_start, e_start)
+                    if overlap > 0.5:  # >0.5s overlap
+                        # Keep the longer segment
+                        s_dur = s_end - s_start
+                        e_dur = e_end - e_start
+                        if s_dur > e_dur:
+                            deduped.remove(existing)
+                            deduped.append(s)
+                            print(f"  Overlap: replaced '{existing.get('section_name','')}' ({e_dur:.1f}s) with '{s.get('section_name','')}' ({s_dur:.1f}s) on {fname}", flush=True)
+                        else:
+                            print(f"  Overlap: dropped '{s.get('section_name','')}' ({s_dur:.1f}s) — overlaps with '{existing.get('section_name','')}' on {fname}", flush=True)
+                        overlap_found = True
+                        break
+            if not overlap_found:
+                deduped.append(s)
+        if len(deduped) < len(sections):
+            print(f"  Removed {len(sections) - len(deduped)} overlapping segments", flush=True)
+        sections = deduped
+
         # Trim excess sections if total overshoots padded target by >15%
         max_allowed = padded_duration * 1.15
         running_total = sum(s.get('end_time', 0) - s.get('start_time', 0) for s in sections)
