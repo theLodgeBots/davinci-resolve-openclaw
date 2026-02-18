@@ -672,9 +672,11 @@ CRITICAL RULES:
 5. Include {padded_duration // 8}-{padded_duration // 5} sections to fill {padded_duration}s. If each section averages ~8s, you need ~{padded_duration // 8} sections minimum.
 6. clip_filename is REQUIRED for each section. Use the exact filenames shown above.
 7. Don't cut mid-sentence. Align start/end to sentence boundaries in the transcript.
-8. Skip clips with only a few words or non-English text.
+8. Skip clips with only a few words, non-English text, or behind-the-scenes/slate talk (e.g. "ready?", "is it recording?", "one two three").
 9. Each segment MUST be at least 3 seconds long and NO MORE than 20 seconds long. Prefer 6-15 second segments with complete thoughts. If a great section is longer than 20s, split it into two sections.
-10. VERIFY YOUR MATH: Before responding, add up all (end_time - start_time) values. The total MUST be between {padded_duration - 10}s and {padded_duration + 10}s. If under, add more sections. If over, remove or shorten sections."""
+10. VERIFY YOUR MATH: Before responding, add up all (end_time - start_time) values. The total MUST be between {padded_duration - 10}s and {padded_duration + 10}s. If under, add more sections. If over, remove or shorten sections.
+11. CLIP VARIETY: No single clip should provide more than 40% of the total planned duration. Spread across multiple clips for better pacing and variety. Use at least 4 different clips.
+12. SENTENCE BOUNDARIES: Every segment MUST start and end at a complete sentence. Never cut mid-sentence. If a great quote starts mid-sentence, include the full sentence."""
 
     try:
         # Try up to 2 times — retry with gpt-4o if first attempt under-plans
@@ -717,6 +719,31 @@ CRITICAL RULES:
                 print(f"  Capped segment '{s.get('section_name','')}' from {dur:.1f}s to 20.0s", flush=True)
             valid_sections.append(s)
         sections = valid_sections
+
+        # Enforce clip variety: no single clip > 50% of total duration
+        total_planned = sum(s.get('end_time', 0) - s.get('start_time', 0) for s in sections)
+        if total_planned > 0:
+            clip_durations = {}
+            for s in sections:
+                fname = s.get('clip_filename', '')
+                dur = s.get('end_time', 0) - s.get('start_time', 0)
+                clip_durations[fname] = clip_durations.get(fname, 0) + dur
+            max_per_clip = total_planned * 0.5
+            for fname, cdur in clip_durations.items():
+                if cdur > max_per_clip:
+                    # Remove excess segments from this clip (keep the best/longest ones)
+                    clip_segs = sorted([s for s in sections if s.get('clip_filename') == fname],
+                                       key=lambda s: s.get('end_time', 0) - s.get('start_time', 0), reverse=True)
+                    kept_dur = 0
+                    kept = set()
+                    for cs in clip_segs:
+                        d = cs.get('end_time', 0) - cs.get('start_time', 0)
+                        if kept_dur + d <= max_per_clip:
+                            kept_dur += d
+                            kept.add(id(cs))
+                        else:
+                            print(f"  Clip variety: dropped '{cs.get('section_name','')}' from {fname} (clip over 50%)", flush=True)
+                    sections = [s for s in sections if s.get('clip_filename') != fname or id(s) in kept]
 
         # Remove overlapping same-clip segments (keep the longer one)
         deduped = []
