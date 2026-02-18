@@ -1462,14 +1462,16 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             except Exception as e:
                 self.send_json({'error': str(e)})
 
-        elif path == '/api/ai/refine' and method == 'POST':
+        elif (path == '/api/ai/refine' or re.match(r'/api/ai/refine/(\d+)$', path)) and method == 'POST':
             body = self.read_body()
-            script_id = body.get('script_id')
-            user_feedback = body.get('feedback', '')
+            # Support script_id in URL or body
+            m = re.match(r'/api/ai/refine/(\d+)$', path)
+            script_id = int(m.group(1)) if m else body.get('script_id')
+            user_feedback = body.get('feedback', body.get('prompt', ''))
             if not script_id:
                 self.send_json({'error': 'script_id required'})
                 return
-            result = do_ai_refine(script_id, user_feedback)
+            result = do_ai_refine(int(script_id), user_feedback)
             self.send_json(result)
 
         elif path == '/api/ai/auto-edit' and method == 'POST':
