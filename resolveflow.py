@@ -1188,6 +1188,7 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
         return {}
 
     def route(self, method):
+        global PROJECT_READY, PROJECT_DIR, DB_PATH, RF_DIR, THUMB_DIR
         path = urlparse(self.path).path.rstrip('/')
 
         # Serve UI
@@ -1508,6 +1509,80 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(body)
             else:
                 self.send_json({'error': 'script not found'}, 404)
+
+        # ── Admin endpoints ──
+
+        elif path == '/api/admin/reset-project' and method == 'POST':
+            """Reset project — deletes all data in .resolveflow/ and re-scans."""
+            if not PROJECT_DIR:
+                self.send_json({'error': 'no project open'}, 400)
+                return
+            body = self.read_body()
+            keep_transcripts = body.get('keep_transcripts', False)
+            conn = db.get_db(DB_PATH)
+            # Always delete scripts
+            conn.execute("DELETE FROM script_segments")
+            conn.execute("DELETE FROM scripts")
+            if not keep_transcripts:
+                conn.execute("DELETE FROM transcripts")
+                conn.execute("DELETE FROM clips")
+            conn.execute("VACUUM")
+            conn.commit()
+            conn.close()
+            # Re-scan clips if we wiped them
+            if not keep_transcripts:
+                result = open_project(PROJECT_DIR)
+                self.send_json({'ok': True, 'action': 'full_reset', **result})
+            else:
+                self.send_json({'ok': True, 'action': 'scripts_reset'})
+
+        elif path == '/api/admin/delete-all-scripts' and method == 'DELETE':
+            """Delete all scripts and segments."""
+            conn = db.get_db(DB_PATH)
+            conn.execute("DELETE FROM script_segments")
+            conn.execute("DELETE FROM scripts")
+            conn.commit()
+            conn.close()
+            self.send_json({'ok': True})
+
+        elif path == '/api/admin/change-folder' and method == 'POST':
+            """Close current project and return to folder picker."""
+            PROJECT_READY = False
+            PROJECT_DIR = None
+            DB_PATH = None
+            RF_DIR = None
+            THUMB_DIR = None
+            self.send_json({'ok': True})
+
+        elif path == '/api/admin/project-stats' and method == 'GET':
+            """Get detailed project stats for admin panel."""
+            if not PROJECT_READY:
+                self.send_json({'error': 'no project'}, 400)
+                return
+            conn = db.get_db(DB_PATH)
+            clips = conn.execute("SELECT COUNT(*) FROM clips").fetchone()[0]
+            transcribed = conn.execute("SELECT COUNT(DISTINCT clip_id) FROM transcripts").fetchone()[0]
+            scripts = conn.execute("SELECT COUNT(*) FROM scripts").fetchone()[0]
+            segments = conn.execute("SELECT COUNT(*) FROM script_segments").fetchone()[0]
+            db_size = os.path.getsize(DB_PATH) if os.path.exists(DB_PATH) else 0
+            conn.close()
+            # Thumbnail dir size
+            thumb_size = 0
+            if THUMB_DIR and os.path.exists(THUMB_DIR):
+                for f in os.listdir(THUMB_DIR):
+                    fp = os.path.join(THUMB_DIR, f)
+                    if os.path.isfile(fp):
+                        thumb_size += os.path.getsize(fp)
+            self.send_json({
+                'project_dir': PROJECT_DIR,
+                'clips': clips,
+                'transcribed': transcribed,
+                'scripts': scripts,
+                'segments': segments,
+                'db_size_mb': round(db_size / 1024 / 1024, 2),
+                'thumb_size_mb': round(thumb_size / 1024 / 1024, 2),
+                'rf_dir': RF_DIR,
+            })
 
         else:
             self.send_json({'error': 'not found'}, 404)

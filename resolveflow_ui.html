@@ -265,6 +265,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
   </div>
   <button class="btn btn-secondary btn-sm" onclick="doIngest()">⟳ Rescan</button>
   <button class="btn btn-accent btn-sm" id="transcribeBtn" onclick="doTranscribe()">Transcribe All</button>
+  <button class="btn btn-secondary btn-sm" onclick="openSettings()" title="Settings" style="font-size:16px;padding:4px 10px">⚙</button>
 </div>
 
 <!-- Tab Nav -->
@@ -1502,6 +1503,112 @@ loadScript = async function(id) {
     renderScript(data);
   } catch(e) { toast('Failed to load script', 'error'); }
 };
+// ── Settings / Admin ──
+async function openSettings() {
+  const modal = document.getElementById('settingsModal');
+  modal.style.display = 'flex';
+  // Load stats
+  try {
+    const stats = await api('/api/admin/project-stats');
+    document.getElementById('settingsContent').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Project Folder</div>
+          <div style="font-size:13px;color:var(--text);word-break:break-all">${stats.project_dir || '—'}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Data Location</div>
+          <div style="font-size:13px;color:var(--text);word-break:break-all">${stats.rf_dir || '—'}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Clips</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text)">${stats.clips} <span style="font-size:13px;font-weight:400;color:var(--text2)">(${stats.transcribed} transcribed)</span></div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Scripts</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text)">${stats.scripts} <span style="font-size:13px;font-weight:400;color:var(--text2)">(${stats.segments} segments)</span></div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Database Size</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text)">${stats.db_size_mb} MB</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Thumbnails</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text)">${stats.thumb_size_mb} MB</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:20px;display:flex;flex-direction:column;gap:12px">
+        <h4 style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin:0">Actions</h4>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="doChangeFolder()">📁 Change Folder</button>
+          <button class="btn btn-secondary" onclick="doDeleteAllScripts()" style="color:#f59e0b">🗑 Delete All Scripts</button>
+          <button class="btn btn-secondary" onclick="doResetProject(true)" style="color:#f97316">♻ Reset Scripts Only</button>
+          <button class="btn btn-secondary" onclick="doResetProject(false)" style="color:#ef4444">⚠ Full Reset</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">
+          <b>Change Folder</b> — switch to a different video project<br>
+          <b>Delete All Scripts</b> — remove all AI scripts, keep clips &amp; transcripts<br>
+          <b>Reset Scripts Only</b> — clear scripts, keep clips &amp; transcripts<br>
+          <b>Full Reset</b> — wipe everything (clips, transcripts, scripts) and re-scan folder
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    document.getElementById('settingsContent').innerHTML = '<div style="color:var(--text3)">Failed to load project stats</div>';
+  }
+}
+
+async function doChangeFolder() {
+  if (!confirm('Close current project and switch to a different folder?')) return;
+  try {
+    await api('/api/admin/change-folder', 'POST');
+    document.getElementById('settingsModal').style.display = 'none';
+    // Show the folder picker (onboarding)
+    document.getElementById('appMain').style.display = 'none';
+    document.getElementById('onboarding').style.display = 'flex';
+    loadRecents();
+  } catch(e) { toast('Failed to change folder', 'error'); }
+}
+
+async function doDeleteAllScripts() {
+  const count = document.querySelectorAll('.script-item')?.length || '?';
+  if (!confirm(`Delete ALL scripts? This cannot be undone.`)) return;
+  try {
+    await api('/api/admin/delete-all-scripts', 'DELETE');
+    toast('All scripts deleted');
+    document.getElementById('settingsModal').style.display = 'none';
+    loadScripts();
+  } catch(e) { toast('Failed to delete scripts', 'error'); }
+}
+
+async function doResetProject(keepTranscripts) {
+  const msg = keepTranscripts
+    ? 'Reset all scripts? Clips and transcripts will be kept.'
+    : 'FULL RESET — this will delete ALL data (clips, transcripts, scripts) and re-scan the folder. Are you sure?';
+  if (!confirm(msg)) return;
+  if (!keepTranscripts && !confirm('This is irreversible. Type OK to confirm.')) return;
+  try {
+    await api('/api/admin/reset-project', 'POST', { keep_transcripts: keepTranscripts });
+    toast(keepTranscripts ? 'Scripts reset' : 'Full project reset');
+    document.getElementById('settingsModal').style.display = 'none';
+    loadClips();
+    loadScripts();
+  } catch(e) { toast('Failed to reset', 'error'); }
+}
 </script>
+
+<!-- Settings Modal -->
+<div id="settingsModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg);border-radius:12px;width:min(640px,90vw);max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+    <div style="display:flex;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border)">
+      <h3 style="font-size:16px;font-weight:700;flex:1;margin:0">⚙ Settings</h3>
+      <button class="btn btn-ghost" onclick="document.getElementById('settingsModal').style.display='none'" style="font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="settingsContent" style="padding:24px">
+      <div style="color:var(--text3)">Loading...</div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
