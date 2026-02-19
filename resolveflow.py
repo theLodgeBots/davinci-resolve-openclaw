@@ -51,6 +51,8 @@ def scan_videos(directory):
             ext = os.path.splitext(f)[1].lower()
             if ext not in VIDEO_EXTS:
                 continue
+            if f.startswith('._'):
+                continue
             full = os.path.join(root, f)
             rel = os.path.relpath(full, directory)
             meta = probe_video(full)
@@ -320,11 +322,8 @@ def do_transcribe_resolve():
         _transcription_progress['running'] = False
         return {'error': f'Resolve API error: {e}'}
 
-    # Get all media pool clips
+    # Get all media pool clips (may be empty if new project)
     resolve_clips = get_resolve_media_pool_clips()
-    if not resolve_clips:
-        _transcription_progress['running'] = False
-        return {'error': 'No clips in media pool'}
 
     # Build map: filename -> media pool clip and check transcription status
     clip_map = {}
@@ -346,12 +345,51 @@ def do_transcribe_resolve():
     # Get DB clips that need transcription
     db_clips = db.get_all_clips(DB_PATH)
     clips_to_process = []
+    missing_from_pool = []
     for c in db_clips:
         existing = db.get_clip_transcript(DB_PATH, c['id'])
         if existing:
             continue  # Already in DB
         if c['filename'] in clip_map:
             clips_to_process.append(c)
+        else:
+            missing_from_pool.append(c)
+
+    # Auto-import missing clips into Resolve media pool
+    if missing_from_pool:
+        print(f"[Transcribe] Importing {len(missing_from_pool)} clips into Resolve media pool...")
+        import_paths = []
+        for c in missing_from_pool:
+            fp = c.get('full_path') or os.path.join(PROJECT_DIR, c.get('relative_path', c['filename']))
+            if os.path.exists(fp):
+                import_paths.append(fp)
+        if import_paths:
+            imported = pool.ImportMedia(import_paths)
+            if imported:
+                print(f"  Imported {len(imported)} clips")
+                # Refresh clip map
+                resolve_clips = get_resolve_media_pool_clips()
+                clip_map = {}
+                for rc in resolve_clips:
+                    try:
+                        props = rc.GetClipProperty()
+                        if not props:
+                            continue
+                        fname = props.get('File Name', '')
+                        if fname:
+                            clip_map[fname] = {'media_pool_item': rc, 'resolve_status': props.get('Transcription Status', '')}
+                    except Exception:
+                        pass
+                # Re-check missing clips
+                for c in missing_from_pool:
+                    if c['filename'] in clip_map:
+                        clips_to_process.append(c)
+                    else:
+                        _transcription_progress['errors'].append(f"{c['filename']}: failed to import into Resolve")
+            else:
+                print("  ImportMedia returned falsy")
+                for c in missing_from_pool:
+                    _transcription_progress['errors'].append(f"{c['filename']}: not in Resolve media pool")
 
     _transcription_progress['total'] = len(clips_to_process)
 
@@ -1524,10 +1562,11 @@ class ResolveFlowHandler(SimpleHTTPRequestHandler):
             conn.execute("DELETE FROM script_segments")
             conn.execute("DELETE FROM scripts")
             if not keep_transcripts:
+                conn.execute("DELETE FROM transcript_segments")
                 conn.execute("DELETE FROM transcripts")
                 conn.execute("DELETE FROM clips")
-            conn.execute("VACUUM")
             conn.commit()
+            conn.execute("VACUUM")
             conn.close()
             # Re-scan clips if we wiped them
             if not keep_transcripts:

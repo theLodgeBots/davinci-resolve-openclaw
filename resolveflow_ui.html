@@ -251,6 +251,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
   </div>
 </div>
 
+<!-- Loading overlay -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:2000;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <div id="loadingText" style="color:var(--text2);font-size:15px;font-weight:500">Loading project…</div>
+  <div id="loadingSubtext" style="color:var(--text3);font-size:12px"></div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
 <!-- App (hidden until project is open) -->
 <div id="appMain" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
 
@@ -258,6 +266,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 <div class="header">
   <div class="logo">ResolveFlow</div>
   <div class="project-name" id="projectName">Loading…</div>
+  <button onclick="exitProject()" title="Close project" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:12px;margin-left:6px">✕</button>
   <div class="header-spacer"></div>
   <div class="resolve-status">
     <div class="resolve-dot" id="resolveDot"></div>
@@ -513,8 +522,23 @@ function switchTab(tab) {
 }
 
 // ── Data loading ──
+function showLoading(text, subtext) {
+  const el = document.getElementById('loadingOverlay');
+  document.getElementById('loadingText').textContent = text || 'Loading…';
+  document.getElementById('loadingSubtext').textContent = subtext || '';
+  el.style.display = 'flex';
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+function updateLoading(text, subtext) {
+  if (text) document.getElementById('loadingText').textContent = text;
+  if (subtext !== undefined) document.getElementById('loadingSubtext').textContent = subtext;
+}
+
 async function loadAll() {
   try {
+    updateLoading('Loading clips…', 'Fetching project data');
     const [project, clips, resolveStatus] = await Promise.all([
       api('/project'), api('/clips'), api('/resolve/status')
     ]);
@@ -524,10 +548,12 @@ async function loadAll() {
     $('#resolveDot').className = `resolve-dot ${resolveStatus.connected ? 'on' : 'off'}`;
     $('#resolveLabel').textContent = resolveStatus.connected
       ? `Resolve: ${resolveStatus.project || 'Connected'}` : 'Resolve: Offline';
+    updateLoading('Rendering…', `${clips.length} clips loaded`);
     renderClipsStats();
     renderClips();
-    loadScriptsList();
-  } catch(e) { toast('Failed to load: ' + e.message, 'error'); }
+    await loadScriptsList();
+    hideLoading();
+  } catch(e) { hideLoading(); toast('Failed to load: ' + e.message, 'error'); }
 }
 
 // ── CLIPS TAB ──
@@ -1358,13 +1384,13 @@ function hideNewScriptModal() {
 let browseCurrentPath = '';
 
 async function checkProject() {
+  showLoading('Starting up…', 'Checking for open project');
   try {
     const project = await api('/project');
-    // Project is loaded, show app
     showApp();
-    loadAll();
+    await loadAll();
   } catch(e) {
-    // No project, show folder picker
+    hideLoading();
     showFolderPicker();
   }
 }
@@ -1447,9 +1473,8 @@ async function openCurrentFolder() {
 }
 
 async function openFolder(path) {
+  showLoading('Opening project…', path.split('/').pop());
   try {
-    document.getElementById('openFolderBtn').textContent = 'Opening…';
-    document.getElementById('openFolderBtn').disabled = true;
     const res = await fetch('/api/project/open', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -1457,18 +1482,17 @@ async function openFolder(path) {
     });
     const data = await res.json();
     if (data.error) {
+      hideLoading();
       toast(data.error, 'error');
-      document.getElementById('openFolderBtn').textContent = 'Open This Folder';
-      document.getElementById('openFolderBtn').disabled = false;
       return;
     }
-    toast(`Opened ${data.name} — ${data.clip_count} clips`, 'success');
+    updateLoading('Scanning clips…', `${data.clip_count} clips found`);
     showApp();
-    loadAll();
+    await loadAll();
+    toast(`Opened ${data.name} — ${data.clip_count} clips`, 'success');
   } catch(e) {
+    hideLoading();
     toast('Failed to open: ' + e.message, 'error');
-    document.getElementById('openFolderBtn').textContent = 'Open This Folder';
-    document.getElementById('openFolderBtn').disabled = false;
   }
 }
 
@@ -1576,6 +1600,15 @@ async function doChangeFolder() {
   } catch(e) { toast('Failed to change folder', 'error'); }
 }
 
+async function exitProject() {
+  try {
+    await apiPost('/admin/change-folder', {});
+    document.getElementById('appMain').style.display = 'none';
+    document.getElementById('onboarding').style.display = 'flex';
+    loadRecents();
+  } catch(e) { toast('Failed to close project', 'error'); }
+}
+
 async function doDeleteAllScripts() {
   const count = document.querySelectorAll('.script-item')?.length || '?';
   if (!confirm(`Delete ALL scripts? This cannot be undone.`)) return;
@@ -1583,8 +1616,8 @@ async function doDeleteAllScripts() {
     await api('/admin/delete-all-scripts', {method:'DELETE'});
     toast('All scripts deleted');
     document.getElementById('settingsModal').style.display = 'none';
-    loadScripts();
-  } catch(e) { toast('Failed to delete scripts', 'error'); }
+    await loadScriptsList();
+  } catch(e) { console.error('Delete scripts error:', e); toast('Failed to delete scripts: ' + e.message, 'error'); }
 }
 
 async function doResetProject(keepTranscripts) {
@@ -1594,12 +1627,12 @@ async function doResetProject(keepTranscripts) {
   if (!confirm(msg)) return;
   if (!keepTranscripts && !confirm('This is irreversible. Type OK to confirm.')) return;
   try {
-    await apiPost('/admin/reset-project', { keep_transcripts: keepTranscripts });
-    toast(keepTranscripts ? 'Scripts reset' : 'Full project reset');
     document.getElementById('settingsModal').style.display = 'none';
-    loadClips();
-    loadScripts();
-  } catch(e) { toast('Failed to reset', 'error'); }
+    showLoading(keepTranscripts ? 'Resetting scripts…' : 'Full reset…', 'Re-scanning project');
+    const res = await apiPost('/admin/reset-project', { keep_transcripts: keepTranscripts });
+    await loadAll();
+    toast(keepTranscripts ? 'Scripts reset' : 'Full project reset', 'success');
+  } catch(e) { hideLoading(); console.error('Reset error:', e); toast('Failed to reset: ' + e.message, 'error'); }
 }
 </script>
 
