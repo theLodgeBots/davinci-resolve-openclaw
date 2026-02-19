@@ -265,6 +265,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
   </div>
   <button class="btn btn-secondary btn-sm" onclick="doIngest()">⟳ Rescan</button>
   <button class="btn btn-accent btn-sm" id="transcribeBtn" onclick="doTranscribe()">Transcribe All</button>
+  <button class="btn btn-secondary btn-sm" onclick="openHelp()" title="Help" style="font-size:16px;padding:4px 10px">?</button>
   <button class="btn btn-secondary btn-sm" onclick="openSettings()" title="Settings" style="font-size:16px;padding:4px 10px">⚙</button>
 </div>
 
@@ -1503,6 +1504,11 @@ loadScript = async function(id) {
     renderScript(data);
   } catch(e) { toast('Failed to load script', 'error'); }
 };
+// ── Help ──
+function openHelp() {
+  document.getElementById('helpModal').style.display = 'flex';
+}
+
 // ── Settings / Admin ──
 async function openSettings() {
   const modal = document.getElementById('settingsModal');
@@ -1596,6 +1602,106 @@ async function doResetProject(keepTranscripts) {
   } catch(e) { toast('Failed to reset', 'error'); }
 }
 </script>
+
+<!-- Help Modal -->
+<div id="helpModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg);border-radius:12px;width:min(700px,90vw);max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+    <div style="display:flex;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border)">
+      <h3 style="font-size:16px;font-weight:700;flex:1;margin:0">Getting Started with ResolveFlow</h3>
+      <button class="btn btn-ghost" onclick="document.getElementById('helpModal').style.display='none'" style="font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div style="padding:24px;font-size:13px;line-height:1.7;color:var(--text)">
+
+      <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin:0 0 12px">What is ResolveFlow?</h4>
+      <p style="margin:0 0 20px;color:var(--text2)">ResolveFlow is an AI video script editor built on DaVinci Resolve Studio. Point it at a folder of video clips, transcribe them using Resolve's native transcription, then use AI to generate edits — all from your browser.</p>
+
+      <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin:0 0 12px">Requirements</h4>
+      <div style="background:var(--surface2);border-radius:8px;padding:16px;margin-bottom:20px">
+        <div style="display:grid;gap:8px">
+          <div>✅ <b>Python 3.10+</b> — no packages needed, pure stdlib</div>
+          <div>✅ <b>DaVinci Resolve Studio</b> — must be running for transcription &amp; export</div>
+          <div>✅ <b>ffmpeg</b> — for speech trimming (<code style="background:var(--surface);padding:2px 6px;border-radius:4px;font-size:12px">brew install ffmpeg</code>)</div>
+          <div>✅ <b>OpenAI API key</b> — for AI script generation</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin:0 0 12px">Step-by-Step Workflow</h4>
+      <div style="display:grid;gap:16px;margin-bottom:20px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">1</div>
+          <div>
+            <b>Open DaVinci Resolve Studio</b><br>
+            <span style="color:var(--text2)">Launch Resolve and create or open a project. Import your video clips into the Media Pool. The project name doesn't need to match your folder — ResolveFlow finds clips by filename.</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">2</div>
+          <div>
+            <b>Start ResolveFlow</b><br>
+            <span style="color:var(--text2)">Run from Terminal:</span>
+            <div style="background:var(--surface);padding:10px 14px;border-radius:6px;margin-top:6px;font-family:monospace;font-size:12px">
+              export OPENAI_API_KEY="sk-..."<br>
+              python3 resolveflow.py /path/to/videos
+            </div>
+            <span style="color:var(--text2)">Or start without a path and pick the folder from the UI.</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">3</div>
+          <div>
+            <b>Transcribe Clips</b><br>
+            <span style="color:var(--text2)">Click <b>Transcribe All</b> in the header. ResolveFlow creates a temporary timeline per clip in Resolve, runs native transcription, reads back the subtitle data, then cleans up. This is free and frame-accurate.</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">4</div>
+          <div>
+            <b>Generate AI Scripts</b><br>
+            <span style="color:var(--text2)">Go to the <b>Scripts</b> tab → <b>+ New Script</b>. Select which clips to include, set a target duration and style (highlight, documentary, etc.), and let AI arrange the edit. The AI can only use existing transcript text — it never creates new dialog.</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">5</div>
+          <div>
+            <b>Review &amp; Edit</b><br>
+            <span style="color:var(--text2)">Review the script in the two-column view (outline + full text). Click words to select them, then <b>Cut</b> to remove. Use <b>Refine with AI</b> to iterate ("make it punchier", "cut the intro shorter").</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#000;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">6</div>
+          <div>
+            <b>Export to Resolve</b><br>
+            <span style="color:var(--text2)">Click <b>Send to Resolve</b> — a new timeline is created in your Resolve project with all the clips placed at the right in/out points. From there, polish in Resolve as usual.</span>
+          </div>
+        </div>
+      </div>
+
+      <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin:0 0 12px">Do I need Resolve running?</h4>
+      <div style="background:var(--surface2);border-radius:8px;padding:16px;margin-bottom:20px">
+        <div style="display:grid;gap:8px">
+          <div>🟢 <b>Browsing clips &amp; reading transcripts</b> — No, works without Resolve</div>
+          <div>🟢 <b>AI script generation &amp; editing</b> — No, works without Resolve</div>
+          <div>🟢 <b>Word-level cutting</b> — No, works without Resolve</div>
+          <div>🔴 <b>Transcribing clips</b> — Yes, Resolve Studio must be open</div>
+          <div>🔴 <b>Exporting to timeline</b> — Yes, Resolve Studio must be open</div>
+        </div>
+        <p style="margin:12px 0 0;color:var(--text3);font-size:12px">The green dot in the header shows Resolve connection status. If it's red, open Resolve and it will reconnect automatically.</p>
+      </div>
+
+      <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin:0 0 12px">Portable Projects</h4>
+      <p style="margin:0 0 8px;color:var(--text2)">All project data is stored in a <code style="background:var(--surface);padding:2px 6px;border-radius:4px;font-size:12px">.resolveflow/</code> folder inside your video directory. Move the drive to another machine with ResolveFlow installed, open the folder, and pick up where you left off — transcripts, scripts, and edits all travel with your footage.</p>
+
+      <h4 style="font-size:14px;font-weight:700;color:var(--accent);margin:0 0 12px">Keyboard Shortcuts</h4>
+      <div style="background:var(--surface2);border-radius:8px;padding:16px">
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px">
+          <kbd style="background:var(--surface);padding:2px 8px;border-radius:4px;font-size:11px;font-family:monospace">Click + Drag</kbd><span style="color:var(--text2)">Select words in script for cutting</span>
+          <kbd style="background:var(--surface);padding:2px 8px;border-radius:4px;font-size:11px;font-family:monospace">Native Select</kbd><span style="color:var(--text2)">Browser text selection also works for word cuts</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
 <!-- Settings Modal -->
 <div id="settingsModal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
