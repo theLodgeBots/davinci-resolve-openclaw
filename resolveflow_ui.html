@@ -1515,7 +1515,7 @@ async function openSettings() {
   modal.style.display = 'flex';
   // Load stats
   try {
-    const stats = await api('/api/admin/project-stats');
+    const stats = await api('/admin/project-stats');
     document.getElementById('settingsContent').innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
         <div style="background:var(--surface2);border-radius:8px;padding:16px">
@@ -1567,7 +1567,7 @@ async function openSettings() {
 async function doChangeFolder() {
   if (!confirm('Close current project and switch to a different folder?')) return;
   try {
-    await api('/api/admin/change-folder', 'POST');
+    await apiPost('/admin/change-folder', {});
     document.getElementById('settingsModal').style.display = 'none';
     // Show the folder picker (onboarding)
     document.getElementById('appMain').style.display = 'none';
@@ -1580,7 +1580,7 @@ async function doDeleteAllScripts() {
   const count = document.querySelectorAll('.script-item')?.length || '?';
   if (!confirm(`Delete ALL scripts? This cannot be undone.`)) return;
   try {
-    await api('/api/admin/delete-all-scripts', 'DELETE');
+    await api('/admin/delete-all-scripts', {method:'DELETE'});
     toast('All scripts deleted');
     document.getElementById('settingsModal').style.display = 'none';
     loadScripts();
@@ -1594,7 +1594,7 @@ async function doResetProject(keepTranscripts) {
   if (!confirm(msg)) return;
   if (!keepTranscripts && !confirm('This is irreversible. Type OK to confirm.')) return;
   try {
-    await api('/api/admin/reset-project', 'POST', { keep_transcripts: keepTranscripts });
+    await apiPost('/admin/reset-project', { keep_transcripts: keepTranscripts });
     toast(keepTranscripts ? 'Scripts reset' : 'Full project reset');
     document.getElementById('settingsModal').style.display = 'none';
     loadClips();
